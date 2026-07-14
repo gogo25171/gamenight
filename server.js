@@ -581,7 +581,7 @@ function tttMove(room, socket, index) {
       gs.rounds[gs.currentRound][gs.currentMatch].winner = socket.id;
       io.to(room.code).emit('ttt:state', tttPublic(gs));
       io.to(room.code).emit('ttt:tournament_state', tttTournamentPublic(gs));
-      addTimer(room, () => advanceTournament(room), 3000);
+      addTimer(room, () => advanceTournament(room), 4000);
     } else {
       gs.scores[socket.id] = (gs.scores[socket.id] || 0) + 1;
       if (gs.bestOf > 0) {
@@ -903,7 +903,7 @@ function scribbleWordChosen(room, drawerId, word) {
   [...room.players.keys()].filter(id=>id!==drawerId).forEach(id =>
     io.to(id).emit('scribble:draw_start', { word: null, masked: gs.masked, duration: gs.ROUND_DURATION })
   );
-  addTimer(room, () => sendHint(room), 30000);
+  addTimer(room, () => sendHint(room), 40000);
   addTimer(room, () => sendHint(room), 55000);
   addTimer(room, () => { if (room.gameState?.phase==='drawing') endScribbleRound(room, false); }, gs.ROUND_DURATION*1000);
 }
@@ -1350,7 +1350,7 @@ function endQuiz(room) {
 
 // ─────────────────────────── START ───────────────────────────
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 const MDNS_HOST = 'gamenight.local';
 
 server.listen(PORT, '0.0.0.0', () => {

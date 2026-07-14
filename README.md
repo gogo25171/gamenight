@@ -76,7 +76,7 @@ npm install
 | macOS / Linux | `./start.sh` |
 | Anywhere | `npm start` |
 
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+Open **[http://localhost:4000](http://localhost:4000)** in your browser.
 
 ---
 
@@ -87,9 +87,9 @@ When the server starts it prints every URL your friends can use:
 ```
 🎮  GameNight is live!
 
-  Local:    http://localhost:3000
-  Network:  http://192.168.1.42:3000   ← share this!
-  Network:  http://10.0.0.5:3000
+  Local:    http://localhost:4000
+  Network:  http://192.168.1.42:4000   ← share this!
+  Network:  http://10.0.0.5:4000
 ```
 
 Anyone on the **same WiFi or LAN** can open the Network URL directly — no setup needed on their end.
@@ -97,7 +97,7 @@ Anyone on the **same WiFi or LAN** can open the Network URL directly — no setu
 The server also advertises itself via **mDNS (Bonjour)**, so on most devices you can use the stable hostname instead:
 
 ```
-http://gamenight.local:3000
+http://gamenight.local:4000
 ```
 
 > **Tip:** `gamenight.local` works on macOS, iOS, Android, and most Linux desktops out of the box. Windows may need [Bonjour for Windows](https://support.apple.com/kb/DL999). If it doesn't resolve, fall back to the IP shown in the terminal.

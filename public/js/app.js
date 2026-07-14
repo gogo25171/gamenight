@@ -105,7 +105,7 @@ function showLoading(on) {
   document.getElementById('loading-overlay').classList.toggle('hidden', !on);
 }
 
-function toast(msg, duration = 3000, type = '') {
+function toast(msg, duration = 4000, type = '') {
   const el = document.createElement('div');
   el.className = 'toast' + (type ? ` toast-${type}` : '');
   el.textContent = msg;

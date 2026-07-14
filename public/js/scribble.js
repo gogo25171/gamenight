@@ -445,7 +445,7 @@ const Scribble = (() => {
     void el.offsetWidth;
     el.classList.add('scb-guess-pop');
     showGuessBurst();
-    setTimeout(() => el.classList.add('hidden'), 3000);
+    setTimeout(() => el.classList.add('hidden'), 4000);
     setWordDisplay(word);
   }
 
