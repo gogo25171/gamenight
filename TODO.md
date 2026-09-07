@@ -1,7 +1,12 @@
 # 📋 TODO — GameNight
 
 Idées de jeux à ajouter et améliorations en attente.
-Les 5 jeux actuels : Mongolpuri · UNO · Quiz · Tic Tac Toe · Scribble.
+Les 8 jeux actuels : Mongolpuri · UNO · Quiz · Morpion · Scribble ·
+Puissance 4 🅱️ · Undercover 🅱️ · Pierre-Feuille-Ciseaux 🅱️.
+
+> 🅱️ = **bêta**. Le jeu est jouable de bout en bout mais son équilibrage et ses
+> réglages bougent encore ; un badge `BETA` s'affiche sur la carte d'accueil,
+> dans le lobby et dans l'en-tête du jeu.
 
 ---
 
@@ -17,12 +22,14 @@ Classés par effort d'implémentation. « Réutilise » = infra déjà en place 
 
 | Jeu | Joueurs | Principe | Réutilise |
 |-----|---------|----------|-----------|
-| **Puissance 4** | 2+ | Grille 7×6, aligner 4 jetons. Support tournoi identique au morpion. | Toute la logique `tictactoe` (matchs, best-of, bracket) — c'est un copier-adapter |
-| **Blanc / Undercover** | 4–12 | Tout le monde reçoit un mot sauf 1 (ou 2) qui en a un légèrement différent. Chacun donne un indice, puis on vote. | Cycle `killerdoctor` (rôles secrets, discussion, vote, élimination) |
 | **Deux Vérités, Un Mensonge** | 3+ | Chacun soumet 3 affirmations, les autres devinent laquelle est fausse. | Soumission + vote + scoring du quiz |
 | **Quiz Photo / Blind Test emoji** | 2+ | Variante du quiz : deviner un film/une chanson à partir d'emojis. | Moteur `quiz` complet, seule la banque de questions change (locale, pas d'internet) |
-| **Pierre-Feuille-Ciseaux tournoi** | 2+ | Rounds simultanés, best-of. | Bracket `tictactoe` |
-| **Morpion Ultimate (9×9)** | 2 | Morpion imbriqué : ton coup décide de la case où joue l'adversaire. | `tictactoe` (moteur + vue) |
+| **Morpion Ultimate (9×9)** | 2 | Morpion imbriqué : ton coup décide de la case où joue l'adversaire. | `tictactoe` (moteur + vue) — voir aussi « Variantes de jeux » plus bas |
+
+> ✅ **Livrés (en bêta) :** Puissance 4, Blanc / Undercover et Pierre-Feuille-Ciseaux
+> tournoi sont désormais dans le jeu. Le morpion a gagné un réglage **taille de
+> grille** (3×3 / 4×4 / 5×5). Reste à les sortir de bêta : équilibrage, tests de
+> reconnexion, retours de soirée.
 
 ### 🟡 Moyens — nouveau moteur mais patterns connus
 
@@ -34,7 +41,7 @@ Classés par effort d'implémentation. « Réutilise » = infra déjà en place 
 | **Ni Oui Ni Non / Time's Up** | 3+ | Faire deviner des mots en 3 manches (parler / mimer / un mot). | Timer + rotation façon Scribble |
 | **Gartic Phone** | 4–15 | Téléphone arabe en dessins : chacun écrit une phrase, le voisin la dessine, le suivant décrit le dessin, etc. Tout le monde joue en simultané. À la fin, on déroule chaque « album » devant le groupe. | Canevas + outils de dessin de `scribble` réutilisables tels quels. Le nouveau : chaînes parallèles (1 album par joueur), rotation à chaque tour, et l'écran de restitution finale |
 | **Président / Trou du cul** | 3–7 | Jeu de cartes de défausse par combinaisons. | Réutilise le deck + main + tour de jeu d'UNO |
-| **Bataille Navale** | 2 | Placement de flotte puis tirs alternés. | Phase de placement (nouvelle), puis tour par tour classique |
+| **Bataille Navale** | 2 | Placement de flotte puis tirs alternés. | Phase de placement (nouvelle), puis tour par tour classique — [plan détaillé](#-bataille-navale--plan-dimplémentation) |
 | **Puzzle mot (type Wordle) en versus** | 2+ | Tout le monde résout la même grille, le plus rapide gagne. | Liste de mots locale, clavier virtuel |
 | **Dessine et Devine par équipes** | 6+ | Scribble en 2 équipes avec score collectif. | Extension de `scribble` + notion d'équipe |
 
@@ -51,11 +58,14 @@ Classés par effort d'implémentation. « Réutilise » = infra déjà en place 
 
 ### ⭐ Priorité suggérée
 
-1. **Puissance 4** — le plus rapide à livrer, réutilise le bracket de tournoi.
-2. **Blanc / Undercover** — très fun en soirée, la boucle Mongolpuri fait déjà 90 % du travail.
-3. **Gartic Phone** — gros potentiel de fous rires, et le canevas de Scribble est déjà écrit.
-4. **Cartes contre l'humanité (SFW)** — fort effet de groupe, moteur simple.
-5. **Quiz emoji local** — supprime la dépendance internet du Quiz.
+1. ~~**Puissance 4**~~ — ✅ livré (bêta).
+2. ~~**Blanc / Undercover**~~ — ✅ livré (bêta).
+3. ~~**Pierre-Feuille-Ciseaux tournoi**~~ — ✅ livré (bêta).
+4. **Bataille Navale** — la seule vraie nouveauté de moteur du lot : une phase de
+   placement. Plan détaillé plus bas.
+5. **Gartic Phone** — gros potentiel de fous rires, et le canevas de Scribble est déjà écrit.
+6. **Cartes contre l'humanité (SFW)** — fort effet de groupe, moteur simple.
+7. **Quiz emoji local** — supprime la dépendance internet du Quiz.
 
 ---
 
@@ -146,12 +156,13 @@ Points d'intégration réels dans le code (exemple avec `monjeu`).
 ### Serveur — [server.js](server.js)
 
 - [ ] `defaultSettings()` ([server.js:19](server.js#L19)) — ajouter `case 'monjeu'`
-- [ ] `validateSettings()` ([server.js:30](server.js#L30)) — valider les réglages entrants
-- [ ] `minPlayers()` ([server.js:68](server.js#L68)) — nombre minimum de joueurs
-- [ ] `restartGame()` ([server.js:289](server.js#L289)) — ajouter `monjeu: startMonjeu` dans la map
-- [ ] `handleAction()` ([server.js:297](server.js#L297)) — router vers `monjeuAction()`
-- [ ] `sendReconnectState()` ([server.js:247](server.js#L247)) — état renvoyé après un refresh
-- [ ] `onPlayerDisconnect()` ([server.js:344](server.js#L344)) — que se passe-t-il si un joueur part
+- [ ] `validateSettings()` ([server.js:33](server.js#L33)) — valider les réglages entrants
+- [ ] `minPlayers()` ([server.js:87](server.js#L87)) — nombre minimum de joueurs
+- [ ] `restartGame()` ([server.js:322](server.js#L322)) — ajouter `monjeu: startMonjeu` dans la map
+      (⚠️ la même map est écrite deux fois : aussi dans le handler `game:start`)
+- [ ] `handleAction()` ([server.js:330](server.js#L330)) — router vers `monjeuAction()`
+- [ ] `sendReconnectState()` ([server.js:266](server.js#L266)) — état renvoyé après un refresh
+- [ ] `onPlayerDisconnect()` ([server.js:389](server.js#L389)) — que se passe-t-il si un joueur part
 - [ ] Nouvelle section `// ── MONJEU ──` : `startMonjeu`, `monjeuAction`, `monjeuPublic`, `endMonjeu`
 
 ### Client
@@ -161,14 +172,369 @@ Points d'intégration réels dans le code (exemple avec `monjeu`).
 - [ ] `public/index.html` — onglet règles `data-game="monjeu"` + `<div id="rules-monjeu">`
 - [ ] `public/index.html` — `<script src="js/monjeu.js"></script>`
 - [ ] `public/js/monjeu.js` — module avec `onState()` et les émissions d'actions
-- [ ] `public/js/app.js` — schéma de settings (~ligne 78) et listeners socket (~ligne 647)
-- [ ] `public/js/app.js` — ajouter le nom dans `gameNames` ([app.js:533](public/js/app.js#L533))
+- [ ] `public/js/app.js` — schéma de settings ([app.js:78](public/js/app.js#L78)) et listeners socket
+      ([app.js:697](public/js/app.js#L697))
+- [ ] `public/js/app.js` — ajouter le nom dans `gameKeys` ([app.js:578](public/js/app.js#L578))
+- [ ] `public/js/app.js` — si le jeu sort en bêta, l'ajouter à `BETA_GAMES`
+      ([app.js:73](public/js/app.js#L73)) — carte d'accueil, lobby et en-tête du jeu
+- [ ] `public/js/i18n/en.json` **et** `fr.json` — les deux dictionnaires doivent avoir
+      exactement les mêmes clés, sinon une langue dégrade en silence
 
 ### Finition
 
 - [ ] Tableau des jeux + section « How to Play » dans [README.md](README.md)
 - [ ] Badge `games-N` du README à incrémenter
 - [ ] Tester : reconnexion en pleine partie · départ d'un joueur · rejouer · spectateurs
+
+---
+
+## 🚢 Bataille Navale — plan d'implémentation
+
+Le prochain jeu de la liste. Il suit la [checklist ci-dessus](#-checklist--ajouter-un-jeu)
+comme les autres, mais il introduit une chose que le projet n'a encore jamais faite :
+une **phase de placement** avant que le tour par tour ne commence.
+
+### Ce que ça reprend de l'existant
+
+| Brique | D'où elle vient |
+|--------|-----------------|
+| Grille cliquable rendue par le client | `connect4` — la grille est construite en JS depuis `cols`/`rows` envoyés par le serveur |
+| Deux joueurs + spectateurs, best-of, `matchWinner` | `tictactoe` / `connect4`, mode classique |
+| État privé qui ne sort jamais dans le public | `killerdoctor` (rôle) et `undercover` (mot) : `*Public()` construit la vue diffusable, le reste part en `socket.emit` |
+| Chrono par tour avec relance automatique | `undercover` (`deadline` + `addTimer`) |
+| Départ d'un joueur en pleine partie | `connect4` → `c4:player_left` |
+
+### Ce qu'il faut construire
+
+- [ ] **Phase de placement.** Chaque joueur pose sa flotte sur sa propre grille
+      pendant que l'autre fait de même — donc deux états privés en parallèle, pas
+      un tour par tour. Un bouton « Flotte prête » ; quand les deux sont prêts, le
+      combat commence. Chrono de secours : à l'expiration, placement aléatoire.
+- [ ] **Validation serveur du placement.** Le client propose, le serveur vérifie :
+      bon nombre de bateaux, bonnes longueurs, dans la grille, sans chevauchement.
+      Comme partout ici, une valeur invalide est **rejetée, pas corrigée**.
+- [ ] **Deux grilles à l'écran.** « Ma flotte » (mes bateaux + les tirs reçus) et
+      « Tirs » (ce que je sais de l'adversaire : ○ à l'eau, ✕ touché, 🔥 coulé).
+- [ ] **`bnPublic()` — le point sensible.** La position des bateaux adverses ne doit
+      **jamais** partir dans l'état public, même « caché » côté client. Le public ne
+      contient que : les cases déjà tirées, leur résultat, et la liste des bateaux
+      coulés. Chaque joueur reçoit sa propre flotte par `socket.emit`.
+- [ ] **Reconnexion.** `sendReconnectState()` doit rendre : ma flotte, mes tirs, les
+      tirs reçus, à qui est le tour, et la phase (placement ou combat).
+
+### Réglages proposés
+
+| Réglage | Valeurs | Défaut |
+|---------|---------|--------|
+| `gridSize` | 8×8 · 10×10 · 12×12 | 10 |
+| `fleet` | classique (5·4·3·3·2) · courte (4·3·2) · longue (5·5·4·3·3·2) | classique |
+| `salvo` | off · on (autant de tirs que de bateaux encore à flot) | off |
+| `turnTime` | 15 · 30 · 45 s | 30 |
+| `bestOf` | libre · 3 · 5 | libre |
+
+Rappel : chaque valeur listée ici doit exister à l'identique dans
+`SETTINGS_SCHEMA` **et** dans `validateSettings()`, sinon l'hôte choisit un
+réglage que le serveur jette en silence.
+
+### Points de vigilance
+
+1. **Le placement est la partie longue à tester.** Rotation, chevauchement, bord de
+   grille, glisser-déposer sur mobile. Prévoir un bouton « Placement aléatoire » dès
+   la première version : c'est aussi le repli quand le chrono expire.
+2. **Un abandon pendant le placement** ne doit pas figer la salle : si un joueur
+   part, l'autre gagne par forfait, comme dans `connect4`.
+3. **Ne pas partir sur le tournoi tout de suite.** Une partie dure bien plus
+   longtemps qu'un morpion ; un bracket à 8 joueurs serait interminable. Deux
+   joueurs et des spectateurs pour la v1, bracket seulement si l'envie vient.
+4. **Sortie en bêta**, comme les trois derniers jeux : badge `BETA`, puis retrait du
+   badge après quelques soirées sans bug.
+
+---
+
+## 🎲 Variantes de jeux — à réfléchir
+
+Une variante coûte beaucoup moins cher qu'un jeu neuf : même vue, même boucle,
+souvent un seul réglage en plus. Le morpion vient d'en donner l'exemple — la
+**taille de grille** (3×3 / 4×4 / 5×5) n'a demandé qu'un réglage et une détection
+d'alignement générique, pas un nouveau jeu.
+
+L'idée à creuser : est-ce qu'une variante mérite d'être **un réglage du jeu
+existant** (le lobby a déjà tout ce qu'il faut) ou **une carte séparée sur
+l'accueil** (plus visible, mais un jeu de plus à maintenir) ?
+
+### Morpion
+
+| Variante | Ce que ça change | Réglage ou jeu à part ? |
+|----------|------------------|-------------------------|
+| **Gravité** — les symboles tombent au fond de la colonne | Le morpion devient un Puissance 4 miniature | Réglage |
+| **Misère** — celui qui aligne **perd** | Inverse la condition de victoire, rien d'autre | Réglage |
+| **Cases éphémères** — chaque joueur n'a que 3 pions ; le 4ᵉ efface le plus ancien | Plus jamais de match nul | Réglage |
+| **Ultimate 9×9** — ton coup décide de la sous-grille adverse | Nouveau moteur de coups légaux | Jeu à part |
+| **À l'aveugle** — on ne voit pas les coups adverses, le serveur annonce « occupé » | Nouvelle vue, mais moteur identique | Réglage |
+
+### Puissance 4
+
+- **Pop-out** : retirer un de ses propres jetons du bas de la colonne.
+- **Aligner 5** sur une grille plus large — un seul paramètre `need` à exposer,
+  la détection est déjà générique.
+- **Gravité inversée** : une manche sur deux, les jetons tombent vers le haut.
+
+### Undercover
+
+- **Deux paires de mots** : deux camps d'imposteurs qui s'ignorent.
+- **Indices écrits en simultané** puis révélés d'un coup — supprime l'avantage
+  de parler en dernier.
+- **Mode duo** : les civils gagnent seulement s'ils désignent aussi le bon mot.
+
+### Pierre-Feuille-Ciseaux
+
+- **Lézard-Spock** : 5 coups, même moteur, table de victoires à étendre.
+- **Double élimination** : un perdant a droit à un second bracket.
+- **Manche à mise** : miser des points sur une manche avant de jouer.
+
+### UNO · Quiz · Scribble
+
+- **UNO** : règles maison en cases à cocher (empilage des +2, jouer après pioche,
+  7-0). Déjà noté plus haut comme « Uno Flip / extensions ».
+- **Quiz** : mode « mort subite » — une mauvaise réponse et on sort.
+- **Scribble** : mode « un seul mot pour toute la salle », tout le monde dessine en
+  même temps et on vote le meilleur dessin.
+
+### Comment décider
+
+1. La variante change-t-elle la **condition de victoire** ou seulement la **mise en
+   place** ? Mise en place → réglage. Condition de victoire → probablement un jeu.
+2. Est-ce qu'un joueur qui arrive en cours de soirée comprend la variante **sans
+   relire les règles** ? Si non, elle mérite son propre onglet de règles.
+3. Est-ce que ça ajoute une **ligne dans `validateSettings()`** ou une **section
+   entière dans `server.js`** ? La réponse est en général la bonne réponse.
+
+---
+
+## 🤖 Bots — compléter une table, ou jouer tout seul
+
+Deux besoins bien distincts, qui se règlent avec le même moteur :
+
+1. **Compléter une partie.** Il manque un joueur pour lancer Mongolpuri à 4, ou
+   quelqu'un part en plein tournoi. Aujourd'hui la soirée s'arrête.
+2. **Jouer seul.** Tester un jeu, s'entraîner, occuper les cinq minutes avant que
+   tout le monde arrive.
+
+### 🎚️ Le niveau se choisit au départ
+
+Un réglage de lobby comme les autres — même schéma, mêmes contraintes
+(`SETTINGS_SCHEMA` [app.js:78](public/js/app.js#L78) **et** `validateSettings()`
+[server.js:33](server.js#L33), sinon l'hôte choisit une valeur que le serveur jette).
+
+| Niveau | Ce que ça veut dire | Pour qui |
+|--------|---------------------|----------|
+| 🟢 **Découverte** | Joue légalement, au hasard. Ne bloque même pas un alignement évident. | Première partie, enfants |
+| 🔵 **Tranquille** | Gagne si elle peut, bloque si elle doit. Rien de plus. | Le niveau « ami pas concentré » |
+| 🟠 **Sérieux** | Recherche en profondeur limitée + heuristique de position. | Le niveau par défaut |
+| 🔴 **Impitoyable** | Profondeur maximale. Sur le morpion 3×3, littéralement imbattable. | Ceux qui veulent perdre |
+
+Deux réglages en plus : **combien de bots** ajouter, et s'ils sont ajoutés
+**automatiquement** quand la table n'atteint pas `minPlayers()`
+([server.js:87](server.js#L87)) au bout de N secondes.
+
+### 🧩 Le vrai obstacle : un bot n'a pas de socket
+
+Toute l'architecture passe par l'identifiant de socket : `rooms` et `playerRooms`
+([server.js:14](server.js#L14)), `io.to(id).emit(...)` pour l'état privé,
+`onPlayerDisconnect()` ([server.js:389](server.js#L389)) déclenché par un événement
+`disconnect` qui n'arrivera jamais pour un bot.
+
+Le contournement est plus simple qu'il n'en a l'air : donner au bot un id
+**synthétique** (`bot:1`, `bot:2`) qui ne peut pas entrer en collision avec un id
+de socket. Les `io.to('bot:1').emit(...)` deviennent alors des no-op silencieux —
+personne n'a rejoint cette room — et le bot lit directement `room.gameState` côté
+serveur. Aucun jeu n'a besoin d'être modifié pour ça, ce qui est exactement ce
+qu'on veut.
+
+Les points à ne pas rater :
+
+- [ ] **Le ménage des rooms.** `if (room.players.size === 0)`
+      ([server.js:256](server.js#L256)) supprime la room vide. Avec des bots dans
+      la Map, une salle où tous les humains sont partis **ne sera jamais nettoyée**
+      et ses timers tournent pour toujours. Il faut compter les humains, pas les
+      joueurs.
+- [ ] **`broadcastLobby()`** ([server.js:89](server.js#L89)) — un flag `isBot` pour
+      afficher un badge sur la carte du lobby. Un joueur doit voir immédiatement
+      contre quoi il joue.
+- [ ] **Pas d'expulsion ni de transfert d'hôte vers un bot** — `room:kick` doit
+      pouvoir retirer un bot, `room:transfer_host` doit le refuser.
+- [ ] **Les stats de session.** `recordResult()` ([server.js:506](server.js#L506))
+      doit-il compter les victoires d'un bot au tableau des scores ? Probablement
+      pas, ou dans une ligne à part.
+- [ ] **Un huitième hook.** Les sept fonctions de dispatch décrites dans
+      [CLAUDE.md](CLAUDE.md) deviennent huit : `botAct(room, botId)`, qui aiguille
+      vers `tttBotMove`, `c4BotMove`, etc. C'est le seul endroit générique à écrire.
+- [ ] **Le bot doit « réfléchir ».** Une réponse instantanée est glaçante et casse
+      l'illusion. Toujours passer par `addTimer(room, …)`
+      ([server.js:86](server.js#L86)) avec un délai un peu aléatoire — jamais un
+      `setTimeout` nu, sinon une salle vidée laisse des timers derrière elle.
+
+### 🎯 Faisabilité, jeu par jeu
+
+| Jeu | Difficulté du bot | Ce qui existe déjà |
+|-----|-------------------|--------------------|
+| ⭕ **Morpion** | ⭐ Triviale | `tttWin()` ([server.js:714](server.js#L714)) est déjà générique : minimax sur 3×3, profondeur limitée sur 4×4 / 5×5 |
+| 🔴 **Puissance 4** | ⭐⭐ Facile | `c4Win()` ([server.js:1525](server.js#L1525)) donne la détection ; reste une fonction d'évaluation et un negamax profondeur 4–6 |
+| ✂️ **Pierre-Feuille-Ciseaux** | ⭐ Triviale — et la plus intéressante | Le hasard est mathématiquement optimal, donc un bot « fort » est forcément un **prédicteur de motifs**. C'est le terrain d'essai idéal du modèle joueur décrit plus bas |
+| 🃏 **UNO** | ⭐⭐ Facile | Heuristiques sur la main : garder les cartes noires, poser la couleur dominante, viser le joueur qui a peu de cartes |
+| 🧠 **Quiz** | ⭐ Triviale | Répondre juste avec une probabilité fixée par le niveau, avec un temps de réponse plausible |
+| 🕵️ **Undercover** | ⭐⭐⭐⭐ Difficile | Il faut **produire un indice en langue naturelle** puis juger ceux des autres. Hors de portée sans modèle de langue |
+| 🔪 **Mongolpuri** | ⭐⭐⭐⭐ Difficile | Le jeu **est** la discussion. Un bot muet qui vote au hasard ne trompe personne |
+| 🎨 **Scribble** | ⭐⭐⭐⭐⭐ Hors sujet | Dessiner. Non. |
+
+> 💬 **Mon avis :** commencer par **Morpion et Puissance 4**. Ce sont des jeux à
+> information parfaite, le moteur de recherche tient en cinquante lignes, et — c'est
+> le point important — **la même fonction d'évaluation sert ensuite au coach**
+> décrit dans la section suivante. Un seul effort, deux fonctionnalités.
+>
+> Pour les jeux de discussion (Undercover, Mongolpuri), mieux vaut **assumer qu'il
+> n'y aura pas de bot** que d'en livrer un qui vote au hasard : il gâche la partie
+> des humains au lieu de la sauver. Si l'envie d'un vrai bot revient, c'est une
+> dépendance à un modèle de langue — donc un appel réseau, donc la fin du
+> « fonctionne sans internet ». À arbitrer consciemment, comme le Quiz l'a déjà été.
+
+### 🧠 Le jeu apprend comment tu joues
+
+L'idée : après quelques parties, le jeu sait à peu près où tu en es et te le dit.
+
+**Ce qu'on observe** (rien de plus, et uniquement sur les jeux déterministes) :
+
+| Signal | Ce qu'il indique |
+|--------|------------------|
+| Taux de victoire contre chaque niveau | Le plus direct — 5 victoires d'affilée en 🔵, il est temps de monter |
+| Taux de gaffes | Un coup jouable qui perd alors qu'un coup nul existait. Se mesure avec l'évaluateur du bot |
+| Coups gagnants manqués | Tu avais l'alignement, tu ne l'as pas vu |
+| Blocages manqués | Tu n'as pas vu la menace adverse |
+| Temps de réflexion | Une chute brutale = du clic réflexe, pas de la maîtrise |
+
+**Le conseil, jamais le changement automatique.** Le niveau ne bouge pas tout seul
+— rien n'est plus agaçant qu'un jeu qui décide que tu es devenu bon. Un bandeau
+discret en fin de partie suffit :
+
+> 🎉 *3 victoires d'affilée en Tranquille, sans une seule gaffe. Passer en Sérieux ?*
+> **[Oui] [Plus tard] [Ne plus proposer]**
+
+Et dans l'autre sens, ce qui compte au moins autant :
+
+> 🙂 *Cinq défaites de suite. Repasser en Tranquille ? Ce n'est pas de la triche.*
+
+### 💾 Où vit le modèle joueur — la vraie question
+
+GameNight est **volontairement sans état** : `rooms` est une Map en mémoire, un
+redémarrage efface tout, et [CLAUDE.md](CLAUDE.md) dit que c'est délibéré. Or un
+modèle qui « apprend » ne vaut rien s'il meurt à chaque redémarrage.
+
+| Option | Ce que ça donne | Coût |
+|--------|-----------------|------|
+| **A — `localStorage` côté client** *(recommandé)* | Le modèle est un petit JSON dans **ton** navigateur, envoyé au serveur au moment de rejoindre. Il te suit d'une soirée à l'autre, le serveur reste sans état | Quasi nul. C'est exactement le choix déjà fait pour la langue (`gn_lang`, [i18n.js:12](public/js/i18n.js#L12)) |
+| **B — un fichier JSON côté serveur** | Marche même en changeant de navigateur | Introduit de la persistance dans un projet conçu sans. Écritures concurrentes, chemin à configurer, sauvegarde |
+| **C — une base** | Vrai profil, vrai historique | Voir la section « Intégrer Le Juste Prix » : c'est précisément le désaccord de modèle de données qui a fait écarter la fusion |
+
+> 💬 **Mon avis :** l'option **A**, sans hésiter. Elle garde la promesse « aucune
+> base, redémarre et c'est propre », elle est cohérente avec le choix déjà fait
+> pour la langue, et elle a un effet de bord agréable : **le profil ne quitte
+> jamais le navigateur du joueur**. Rien à écrire dans une politique de
+> confidentialité, rien à purger. Le jour où quelqu'un veut repartir de zéro, il
+> vide son stockage local.
+>
+> Corollaire à assumer : le profil est lié au navigateur, pas au pseudo. Changer de
+> téléphone remet le compteur à zéro. Pour un jeu de soirée, c'est acceptable.
+
+### 📋 Ordre de mise en œuvre
+
+- [ ] `botAct()` générique + id synthétiques + comptage des humains pour le ménage
+      des rooms *(l'infrastructure, sans aucun jeu)*
+- [ ] Bot Morpion aux 4 niveaux — le plus simple, sert de gabarit
+- [ ] Réglages de lobby : niveau, nombre de bots, remplissage automatique
+- [ ] Badge « bot » dans le lobby et dans les vues de jeu
+- [ ] Bot Puissance 4 *(réutilise l'évaluateur)*
+- [ ] Modèle joueur en `localStorage` + bandeau de conseil en fin de partie
+- [ ] Bot Pierre-Feuille-Ciseaux prédictif *(le plus amusant à écrire)*
+- [ ] Bots UNO et Quiz
+- [ ] Tester : un bot qui « part » (kick), une salle 100 % bots, une reconnexion
+      humaine dans une partie contre des bots
+
+---
+
+## 🎓 Apprendre les techniques de chaque jeu
+
+Aujourd'hui le modal « 📖 Comment jouer » ([index.html:840](public/index.html#L840))
+explique **les règles**. Il ne dit nulle part *comment bien jouer*. C'est le
+manque : on sait qu'il faut aligner trois symboles, personne ne dit qu'il faut
+prendre le centre.
+
+### 🪜 Trois niveaux de contenu, du moins cher au plus cher
+
+**1. Un onglet « Techniques » à côté de « Règles »** — le moins cher, à faire en
+premier. La structure existe déjà : `rules-tab` / `rules-content`
+([index.html:846](public/index.html#L846)) et `openRules()`
+([app.js:262](public/js/app.js#L262)) gèrent déjà huit onglets. Ajouter un
+deuxième niveau d'onglets par jeu est du HTML et des clés i18n, zéro serveur.
+
+Le contenu, par jeu — court, concret, jamais un pavé :
+
+| Jeu | Ce qu'on y met |
+|-----|----------------|
+| ⭕ Morpion | Le centre d'abord, les coins ensuite. Créer une double menace. Sur 4×4 et 5×5, jouer les diagonales que l'adversaire regarde le moins |
+| 🔴 Puissance 4 | La colonne centrale vaut deux colonnes de bord. Compter la parité des lignes. Ne pas offrir la case au-dessus de la sienne |
+| ✂️ P-F-C | Les humains rejouent rarement deux fois le même coup, et sortent la pierre en premier. Le vrai conseil : être imprévisible |
+| 🃏 UNO | Garder les cartes noires pour la fin. Vider sa couleur dominante en dernier. Compter les cartes du voisin |
+| 🕵️ Undercover | Un indice trop précis te démasque autant qu'un indice trop vague. Écouter *l'ordre* dans lequel les gens parlent |
+| 🔪 Mongolpuri | Le silence est suspect, l'accusation précipitée aussi. Le tueur vote souvent avec la majorité |
+| 🎨 Scribble | Les formes générales avant les détails. Le chrono récompense la lisibilité, pas la beauté |
+| 🧠 Quiz | Vitesse contre certitude : la barre de score récompense les deux |
+
+**2. L'analyse d'après-partie** — le vrai apport, et presque gratuit **si les bots
+sont faits d'abord**. Rejouer la liste des coups dans le même évaluateur que le bot
+et marquer les moments qui comptent :
+
+> **Partie terminée — 3 moments clés**
+> · Coup 4 : tu pouvais gagner en jouant la colonne 5 🟢
+> · Coup 7 : ce coup a offert l'alignement adverse 🔴
+> · Coup 9 : bien vu, tu as bloqué la double menace ✅
+
+Ça ne marche que sur les jeux à information parfaite (Morpion, Puissance 4). Pour
+les autres, un simple récapitulatif factuel — qui a voté quoi, qui a deviné le plus
+vite — vaut déjà mieux que rien, et `history` existe déjà dans Mongolpuri et
+Undercover.
+
+**3. Les conseils en cours de partie** — à manier avec précaution. Utile pour
+débuter, insupportable ensuite. **Désactivé par défaut**, activable dans le
+réglage… et coupé automatiquement dès qu'on joue à plusieurs humains : personne
+ne veut d'un assistant qui souffle à l'oreille d'un adversaire.
+
+### ⚠️ Points de vigilance
+
+1. **Traduction.** Tout ce contenu double la taille des dictionnaires. Les deux
+   fichiers `en.json` et `fr.json` doivent rester **clé pour clé identiques**, sinon
+   une langue dégrade en silence. C'est le poste de travail principal de cette
+   section, pas le code.
+2. **Le contenu vieillit avec le jeu.** Un conseil sur le morpion 3×3 est faux sur
+   du 5×5. Chaque variante ajoutée (voir « Variantes de jeux ») rend une partie des
+   conseils caducs. À relier au [numéro de version par jeu](#-numéro-de-version-par-jeu).
+3. **Ne pas transformer un jeu de soirée en cours du soir.** Rien ne doit s'ouvrir
+   tout seul, jamais. On consulte les techniques parce qu'on le veut ; l'analyse
+   d'après-partie est un panneau qu'on déplie, pas un écran qu'on subit.
+4. **Le ton.** « Tu as fait une erreur » démoralise ; « il y avait mieux ici »
+   apprend. Ça se joue dans les chaînes de traduction, autant y penser en les
+   écrivant.
+
+### 📋 Ordre de mise en œuvre
+
+- [ ] Onglet « Techniques » dans le modal existant + contenu pour les 8 jeux
+      *(HTML + i18n, aucun serveur)*
+- [ ] Clés `en.json` **et** `fr.json` en même temps, jamais l'une sans l'autre
+- [ ] Panneau d'analyse d'après-partie pour le Morpion *(dépend de l'évaluateur
+      du bot — à faire après)*
+- [ ] Même panneau pour le Puissance 4
+- [ ] Récapitulatif factuel de fin de partie pour Mongolpuri et Undercover
+      *(réutilise `history`)*
+- [ ] Conseils en cours de partie, désactivés par défaut et coupés en multijoueur
 
 ---
 
