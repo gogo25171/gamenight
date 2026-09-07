@@ -174,11 +174,115 @@ Points d'intégration réels dans le code (exemple avec `monjeu`).
 
 ## 🐛 Bugs / dette technique
 
-- [ ] `gameNames` dans [app.js:533](public/js/app.js#L533) ne contient pas `quiz` → le lobby affiche « Lobby » au lieu de « Quiz ». Y ajouter aussi tout nouveau jeu.
+- [x] ~~`gameNames` ne contient pas `quiz` → le lobby affiche « Lobby » au lieu de « Quiz »~~ — corrigé au passage de l'i18n : la table est devenue `gameKeys` dans [app.js](public/js/app.js) et contient les cinq jeux. Y ajouter tout nouveau jeu.
 - [ ] `killerdoctor` a un `nightTime` dans `defaultSettings` mais aucune option correspondante dans le schéma client d'[app.js](public/js/app.js#L78) — réglage non modifiable depuis le lobby.
 - [ ] [server.js](server.js) fait 1367 lignes : découper en `games/tictactoe.js`, `games/uno.js`, etc. avant d'ajouter 3-4 jeux de plus.
 - [ ] Le Quiz nécessite internet (opentdb.com) — prévoir une banque de questions locale en repli.
 - [ ] Pas de `LICENSE` dans le repo alors que le README annonce MIT.
+
+## 🧪 Tests — arrêter de découvrir les régressions en soirée
+
+Aujourd'hui il existe **un seul** test : [test-tournament.js](test-tournament.js), un script
+autonome qui **recopie** `buildTournamentRounds` / `propagateTournamentWinners` depuis
+[server.js](server.js). Deux conséquences : la CI ne vérifie que la syntaxe (`node --check`),
+et le jour où quelqu'un modifie le bracket dans `server.js` sans toucher la copie, le test
+continue de passer en testant du code mort.
+
+### 🎯 Le principe
+
+- [ ] **Un fichier de tests par domaine**, pas un fichier fourre-tout :
+      `tests/tournament.test.js`, `tests/uno.test.js`, `tests/killerdoctor.test.js`,
+      `tests/settings.test.js`, `tests/room.test.js`, `tests/i18n.test.js`
+- [ ] Chaque test **importe le vrai code** — plus jamais de copie. C'est le prérequis :
+      tant que tout est dans un `server.js` de 1 400 lignes sans `module.exports`,
+      rien n'est testable. Le découpage en `games/<id>/` de la section « Plateforme »
+      ci-dessus n'est pas qu'une question de propreté, c'est **ce qui rend les tests possibles**
+- [ ] Utiliser `node:test` + `node:assert` — **intégré à Node ≥ 18**, donc zéro dépendance
+      ajoutée et compatible avec la matrice `18 · 20 · 22` de la CI. Pas de Jest, pas de Vitest
+- [ ] `npm test` lance `node --test tests/` ; la CI le fait tourner sur les trois versions de Node
+
+### 🛡️ Ce qu'il faut couvrir en priorité
+
+Par ordre de « ça a déjà cassé ou ça cassera » :
+
+| Cible | Ce qu'on vérifie | Pourquoi |
+|-------|------------------|----------|
+| **Bracket de tournoi** | 3 à 8 joueurs : nombre de tours, exemptions (byes), propagation du gagnant | Le test existant, mais branché sur le vrai code |
+| **`validateSettings()`** | Une valeur hors liste est **jetée, pas ramenée dans les clous** ; le réglage garde sa valeur par défaut | C'est une règle de sécurité, pas une préférence — un client hostile envoie n'importe quoi |
+| **Cohérence `SETTINGS_SCHEMA` ↔ `validateSettings()`** | Chaque option proposée au lobby est acceptée par le serveur | Le piège documenté dans CLAUDE.md : l'hôte choisit une valeur que le serveur jette en silence |
+| **Règles UNO** | Cartes jouables, +2/+4 en chaîne, sens de jeu, joker qui change la couleur | La logique la plus dense du projet |
+| **Cycle Mongolpuri** | Le Médecin annule le Tueur, conditions de victoire, égalité au vote = aucune élimination | Beaucoup d'états, faciles à casser |
+| **Secrets** | `*Public()` ne contient **jamais** le rôle, le mot de Scribble ni la bonne réponse du Quiz | Le test le plus important : une fuite ici ruine la partie sans lever d'erreur |
+| **Cycle de vie d'un salon** | Code unique, hôte transféré au départ de l'hôte, salon vide supprimé, timers purgés | `clearTimers()` oublié = fuite mémoire silencieuse |
+| **i18n** | `npm run i18n:check` : aucune clé manquante, aucune clé orpheline | Déjà écrit — reste à le brancher en CI |
+| **Scoring** | Points au chrono (Scribble, Quiz), classement, égalités | Silencieusement faux, personne ne s'en aperçoit sur le moment |
+
+### 🔌 Tests d'intégration socket
+
+Les tests unitaires ne couvrent pas ce qui casse vraiment en soirée : la reconnexion et
+les départs en cours de partie.
+
+- [ ] Client `socket.io-client` en `devDependencies`, serveur lancé sur un port éphémère
+- [ ] Scénario : créer un salon → 4 joueurs rejoignent → lancer → un joueur se déconnecte
+      et revient → il retrouve **son** état privé (`sendReconnectState`)
+- [ ] Scénario : l'hôte part → un autre joueur devient hôte, la partie continue
+- [ ] Scénario : deux joueurs, même pseudo → refus explicite
+- [ ] ⚠️ Ces tests doivent **tuer le serveur et les timers** en fin de fichier, sinon
+      `node --test` ne rend jamais la main
+
+### 🧷 Garde-fous anti-régression
+
+- [ ] Ajouter `npm test` à [ci.yml](.github/workflows/ci.yml), au même niveau que
+      `node --check` — un test qui ne tourne pas en CI ne sert à rien
+- [ ] Un test de non-régression pour **chaque bug corrigé** : le test échoue d'abord,
+      la correction le fait passer. C'est ce qui empêche le bug de revenir
+- [ ] Ajouter « écrire les tests du jeu » à la checklist « ajouter un jeu »
+- [ ] Couverture via `node --test --experimental-test-coverage` — utile comme indicateur,
+      **pas comme objectif chiffré**
+- [ ] Supprimer [test-tournament.js](test-tournament.js) une fois `tests/tournament.test.js`
+      branché sur le vrai code — deux tests du même sujet, dont un faux, c'est pire qu'un seul
+
+---
+
+## 🔢 Numéro de version par jeu
+
+Chaque jeu porte sa propre version, indépendante de celle du dépôt. Ça devient
+indispensable dès que les jeux sont des dossiers installables (section « Plateforme »),
+et c'est déjà utile avant : savoir quelle version d'UNO tourne quand un joueur signale
+un bug de règle.
+
+### Où elle vit
+
+- [ ] Dans le manifeste du jeu, à côté de `id`, `name`, `emoji` :
+      `version: '1.2.0'` — en attendant le découpage, une simple table
+      `GAME_VERSIONS` en tête de [server.js](server.js) fait le travail
+- [ ] **SemVer par jeu**, avec un sens précis pour un jeu de soirée :
+      - `patch` — correction sans effet sur les règles
+      - `minor` — nouveau réglage, nouvelle animation, règle optionnelle
+      - `major` — **la règle change** : une partie ne se joue plus pareil qu'avant
+- [ ] La version du jeu **n'est pas** celle de `package.json` : le dépôt peut sortir
+      trois versions sans que le Morpion bouge d'un octet
+
+### Où elle se voit
+
+- [ ] Sur la carte du jeu à l'accueil, en discret (`v1.2.0`), ou seulement dans les règles
+- [ ] Dans le lobby, à côté du nom du jeu — c'est là que l'hôte la lira
+- [ ] Jointe automatiquement aux retours joueurs (section « Espace de commentaires »),
+      avec le jeu et la phase : un bug sans numéro de version est un bug non reproductible
+- [ ] Un endpoint `GET /api/games` qui liste id + version, pratique pour vérifier ce que
+      fait tourner une instance sans ouvrir un navigateur
+
+### Ce que ça permet ensuite
+
+- [ ] Avertir quand les versions divergent entre l'instance et le registre (marketplace)
+- [ ] Un `CHANGELOG` par jeu, dans `games/<id>/CHANGELOG.md`, plutôt qu'un fleuve commun
+- [ ] Rattacher les scopes de commit existants (`uno`, `quiz`, `mongolpuri`…) à la version
+      du jeu concerné : le scope dit déjà quel jeu bouge, il ne manque que le bump
+- [ ] ⚠️ Ne pas transformer ça en cérémonie : si bumper une version devient une corvée
+      manuelle à chaque commit, personne ne le fera. Le dériver des commits conventionnels
+      (`feat(uno):` → minor sur UNO) ou l'assumer comme un geste rare
+
+---
 
 ## 💬 Espace de commentaires / retours des joueurs
 
@@ -455,20 +559,116 @@ l'intérêt de commencer par l'étape 0.
 
 ## 🌐 Traduction / i18n — par joueur
 
-Chaque joueur choisit **sa propre langue d'interface**, sans que ça change quoi que ce
-soit pour les autres. Deux personnes dans le même salon peuvent jouer, l'une en
-français, l'autre en anglais.
+Chaque joueur choisit **sa propre langue d'interface** via une petite icône en haut à
+droite, sans que ça change quoi que ce soit pour les autres. Deux personnes dans le
+même salon peuvent jouer, l'une en français, l'autre en arabe.
 
-### Ce qui est traduisible par joueur (côté client uniquement)
+### 🚧 État d'avancement
 
-- [ ] Fichiers de langue `public/js/i18n/fr.json`, `en.json` — juste des paires clé/valeur
+**Livré** — le moteur, le sélecteur, et `en` + `fr` :
+
+- [x] [public/js/i18n.js](public/js/i18n.js) — chargement des fichiers de langue, repli
+      sur `en`, interpolation `{param}`, pluriels via `Intl.PluralRules`, nombres via
+      `Intl.NumberFormat`, `lang`/`dir` sur `<html>`, changement à chaud sans rechargement
+- [x] Bouton 🌐 fixé en haut à droite sur tous les écrans + menu déroulant
+- [x] Langue mémorisée dans `localStorage`, détectée via `navigator.languages` au premier lancement
+- [x] `public/js/i18n/en.json` et `fr.json` — 397 clés chacun, y compris les 100 noms d'avatars
+      et tout le texte de la modale « How to Play »
+- [x] Extraction des chaînes de [public/index.html](public/index.html) (`data-i18n`,
+      `data-i18n-html`, `data-i18n-placeholder`, `data-i18n-title`, `data-i18n-aria-label`)
+- [x] [public/js/app.js](public/js/app.js) et [tictactoe.js](public/js/tictactoe.js) et
+      [killerdoctor.js](public/js/killerdoctor.js) passent par `t()`
+- [x] `npm run i18n:check` ([scripts/i18n-check.js](scripts/i18n-check.js)) — clés manquantes,
+      clés orphelines, clés utilisées mais absentes du fichier de référence
+
+**Reste à faire pour que l'app soit entièrement traduite :**
+
+- [ ] [scribble.js](public/js/scribble.js), [uno.js](public/js/uno.js) et
+      [quiz.js](public/js/quiz.js) — leurs chaînes dynamiques sont encore en dur en anglais
+- [ ] Les messages poussés par [server.js](server.js) (voir « Côté serveur » plus bas) —
+      `tmsg()` côté client accepte déjà `{key, params}`, il n'y a plus qu'à émettre des clés
+- [ ] Brancher `npm run i18n:check` dans [ci.yml](.github/workflows/ci.yml)
+- [ ] Les langues suivantes : `es`, `zh`, puis `ar` (et sa passe RTL)
+
+### 🌍 Le sélecteur de langue — icône en haut à droite
+
+- [ ] Bouton discret 🌐 **fixé en haut à droite**, visible sur **tous** les écrans
+      (accueil, lobby, en jeu, écran de fin) — même logique que le bouton 💬 de retours
+      prévu plus haut, mais dans le coin opposé pour ne pas se marcher dessus
+- [ ] Au clic : petit menu déroulant listant les langues avec drapeau + nom **écrit dans
+      la langue elle-même** (`Français`, `English`, `Español`, `中文`, `العربية`) —
+      jamais « Arabe » écrit en français : un joueur perdu dans une langue qu'il ne lit
+      pas doit pouvoir retrouver la sienne
+- [ ] Langue courante mémorisée dans `localStorage`, comme le pseudo et l'avatar
+- [ ] Détection au premier lancement via `navigator.languages`, repli sur `en` si aucune
+      correspondance
+- [ ] ⚠️ Changement **à chaud** : re-traduire la page en place, sans rechargement et
+      **sans quitter la partie en cours** — un `reload()` ferait perdre le socket
+- [ ] Mettre à jour `<html lang>` et `<html dir>` à chaque changement
+      ([public/index.html:2](public/index.html#L2))
+- [ ] Attention à la superposition avec ce qui est déjà en haut de vue (en-tête de lobby,
+      chrono, en-tête UNO/Quiz) : prévoir un `z-index` et un décalage sur mobile
+
+### 🗣️ Langues visées
+
+Ordre de priorité suggéré — la structure rend l'ajout d'une langue supplémentaire trivial.
+
+| Code | Langue | Sens | Priorité | Notes |
+|------|--------|------|----------|-------|
+| `en` | English | LTR | 1 | Langue pivot : c'est déjà ce qui est en dur dans le HTML |
+| `fr` | Français | LTR | 1 | Langue de l'auteur et de ce TODO |
+| `es` | Español | LTR | 2 | Chaînes ~15-20 % plus longues qu'en anglais — boutons à tester |
+| `zh` | 中文 (simplifié) | LTR | 2 | Chaînes très **courtes** : les boutons paraissent vides |
+| `ar` | العربية | **RTL** | 3 | Le vrai chantier : voir la section RTL ci-dessous |
+| `de` | Deutsch | LTR | 4 | Mots composés très longs — casse les largeurs fixes |
+| `pt` | Português | LTR | 4 | |
+| `hi` | हिन्दी | LTR | 5 | |
+| `ru` | Русский | LTR | 5 | Pluriels à 3 formes, impose `Intl.PluralRules` |
+| `ja` | 日本語 | LTR | 5 | |
+
+- [ ] Livrer `en` + `fr` d'abord, puis `es` + `zh`, puis `ar`, le reste ensuite
+- [ ] Un fichier `public/js/i18n/<code>.json` par langue — juste des paires clé/valeur
+- [ ] `en.json` fait référence : toute clé absente d'une autre langue **retombe sur
+      l'anglais** et logge un avertissement en console, plutôt que d'afficher la clé brute
+- [ ] Ne **pas** charger les 10 langues au démarrage : un `fetch` du seul fichier
+      nécessaire (le front reste sans build, donc pas de bundle par langue)
+
+### ↔️ Arabe : le support RTL
+
+C'est ce qui coûte le plus cher, et ça ne se voit qu'en le testant.
+
+- [ ] `dir="rtl"` sur `<html>` quand la langue est arabe
+- [ ] Remplacer dans [public/style.css](public/style.css) les `margin-left` /
+      `padding-right` / `left:` par les propriétés logiques CSS
+      (`margin-inline-start`, `inset-inline-end`…) — sinon la mise en page ne se
+      retourne qu'à moitié
+- [ ] Le sélecteur de langue lui-même passe **en haut à gauche** en RTL — d'où
+      `inset-inline-end` plutôt que `right`
+- [ ] Vérifier les éléments à direction imposée : grille du morpion, sens de jeu UNO
+      (horaire / antihoraire), barre de chrono, canevas Scribble — un plateau de jeu ne
+      doit **pas** se miroiter
+- [ ] Codes de salon, scores et chiffres restent en caractères latins
+- [ ] Repli de police propre pour l'arabe et le CJK — le front reste sans dépendance,
+      donc pas de webfont lourde téléchargée
+
+### ✅ Ce qui est traduisible par joueur (côté client uniquement)
+
 - [ ] Marquer les textes du HTML avec un attribut, ex. `<span data-i18n="lobby.waiting">`,
       puis une passe de remplacement au chargement et à chaque changement de langue
-- [ ] Sélecteur de langue à côté du choix d'avatar, mémorisé dans `localStorage`
-      comme le nom et l'avatar le sont déjà
+- [ ] Prévoir aussi les attributs : `data-i18n-placeholder`, `data-i18n-title`,
+      `data-i18n-aria-label` — sinon les champs de saisie et les boutons-icônes restent
+      en anglais
 - [ ] Traduire : accueil, lobby, réglages, boutons, notifications, écrans de fin
-- [ ] Traduire les règles de la modale « How to Play » (le plus gros volume de texte)
-- [ ] Noms des rôles Mongolpuri, couleurs UNO, libellés de score
+- [ ] Traduire les règles de la modale « How to Play » (le plus gros volume de texte —
+      à sortir dans des fichiers `rules.<code>.json` pour ne pas gonfler le fichier de
+      langue principal)
+- [ ] Noms des rôles Mongolpuri, couleurs UNO, libellés de score, `gameNames`
+      ([app.js:533](public/js/app.js#L533))
+- [ ] Nombres, dates et durées via `Intl.NumberFormat` / `Intl.RelativeTimeFormat`
+      plutôt qu'à la main
+- [ ] Pluriels via `Intl.PluralRules` (« 1 joueur » / « 2 joueurs », 3 formes en russe)
+- [ ] Interpolation dans les clés : `"player.left": "{name} a quitté la partie"`
+- [ ] Traduire aussi `<title>` et les libellés d'accessibilité
 
 ### ⚠️ Ce qui ne peut **pas** être par joueur
 
@@ -487,15 +687,144 @@ La *langue d'interface* est personnelle et vit dans le navigateur ; la *langue d
 contenu* (mots de Scribble) est un réglage de salon décidé par l'hôte, au même
 titre que le temps de dessin.
 
-### Notes
+- [ ] Ajouter un réglage de salon `contentLanguage` dans `defaultSettings()` /
+      `validateSettings()` ([server.js:19](server.js#L19)) **et** dans `SETTINGS_SCHEMA`
+      ([app.js:69](public/js/app.js#L69)) — les deux doivent proposer exactement les
+      mêmes valeurs, sinon l'hôte choisit une langue que le serveur jette silencieusement
 
-- Les messages poussés par le serveur (`notification`, « X a quitté la partie »)
-  doivent devenir des **clés + paramètres** (`{key:'player.left', name:'Lucas'}`)
-  et non des phrases toutes faites, sinon le serveur devrait connaître la langue de
-  chaque socket.
-- Commencer par `fr` et `en` ; la structure rend l'ajout d'une 3ᵉ langue trivial.
-- L'interface est actuellement **en anglais en dur** dans le HTML : la première étape
-  est l'extraction des chaînes, c'est là qu'est l'essentiel du travail.
+### 🔌 Côté serveur
+
+- [ ] Les messages poussés par le serveur (`notification`, « X a quitté la partie »)
+      deviennent des **clés + paramètres** (`{key:'player.left', params:{name:'Lucas'}}`)
+      et non des phrases toutes faites, sinon le serveur devrait connaître la langue de
+      chaque socket
+- [ ] Recenser d'abord toutes les chaînes émises depuis [server.js](server.js) — une
+      passe de `grep` sur les `emit(` qui transportent du texte
+- [ ] Le serveur reste **agnostique de la langue** : il ne charge jamais un fichier de
+      traduction
+
+### 🧰 Outillage
+
+- [ ] Script `npm run i18n:check` : clés présentes dans `en.json` et absentes ailleurs,
+      et clés orphelines (plus référencées dans le HTML/JS)
+- [ ] Le faire tourner en CI (`ci.yml`) au même titre que `node --check` — une langue
+      incomplète doit se voir en PR, pas en soirée
+- [ ] ⚠️ L'interface est actuellement **en anglais en dur** dans le HTML : la première
+      étape est l'extraction des chaînes, c'est là qu'est l'essentiel du travail. La faire
+      **avant** d'ajouter de nouveaux jeux, sinon chaque jeu ajoute sa part de dette
+- [ ] Ajouter « marquer les nouvelles chaînes avec `data-i18n` » à la checklist
+      « ajouter un jeu » ci-dessus
+- [ ] Tester chaque langue à la main : troncature (de), débordement (es), boutons qui
+      paraissent vides (zh), mise en page complète (ar)
+
+---
+
+## 📚 Faire évoluer la documentation
+
+La doc [MkDocs Material](mkdocs.yml) a la bonne structure (14 pages, nav propre, thème
+configuré) mais elle est **100 % textuelle** : aucune capture d'écran, aucun schéma.
+Qui découvre le projet ne voit jamais à quoi il ressemble avant de l'avoir installé.
+
+### 🖼️ Captures d'écran — le manque le plus visible
+
+- [ ] Créer `docs/assets/screenshots/` — aujourd'hui `docs/assets/` n'existe même pas
+- [ ] Une capture par jeu, en tête de chaque page de [docs/games/](docs/games/) :
+      morpion, Mongolpuri, UNO, Quiz, Scribble
+- [ ] Les écrans communs : accueil (choix du jeu), lobby avec réglages, sélecteur
+      d'avatar, modale « How to Play », écran de fin / classement
+- [ ] Une capture « héro » en haut de [docs/index.md](docs/index.md) et dans le README
+- [ ] **Cohérence** : mêmes pseudos fictifs, même thème, même largeur de fenêtre
+      (1280×800), mêmes avatars sur toutes les captures
+- [ ] Version claire **et** sombre pour les écrans principaux, servies selon le thème
+      Material (`#only-light` / `#only-dark` en suffixe d'URL d'image)
+- [ ] Recadrer serré : une fenêtre de navigateur entière avec sa barre d'URL ne montre
+      rien d'utile
+- [ ] ⚠️ Poids : PNG optimisés ou WebP, viser < 200 Ko par image — le dépôt n'a pas
+      vocation à devenir une galerie
+- [ ] Texte alternatif systématique sur chaque image (accessibilité + référencement)
+- [ ] Activer le plugin `glightbox` pour l'agrandissement au clic ; `attr_list` (déjà
+      actif) suffit pour dimensionner
+- [ ] Vérifier qu'aucune capture ne montre d'**IP privée ni de nom de machine réel** —
+      c'est un projet de LAN, l'écran de partage affiche une URL
+
+### 🎞️ Animations — pour ce qu'une image fixe ne montre pas
+
+- [ ] Une courte séquence (< 10 s, muette, en boucle) pour : créer un salon + rejoindre
+      avec le code · un tour de Scribble · une nuit de Mongolpuri
+- [ ] Préférer `.mp4`/`.webm` en `<video autoplay muted loop playsinline>` au GIF :
+      5 à 10 fois plus léger à qualité égale
+- [ ] Une animation par page **maximum** — au-delà, la page devient illisible et lourde
+
+### 📐 Diagrammes Mermaid
+
+Plusieurs mécaniques du projet ne se racontent bien qu'en schéma.
+
+- [ ] **Activer Mermaid dans MkDocs d'abord** — ce n'est pas actif aujourd'hui.
+      Ajouter à [mkdocs.yml](mkdocs.yml) :
+
+      ```yaml
+      markdown_extensions:
+        - pymdownx.superfences:
+            custom_fences:
+              - name: mermaid
+                class: mermaid
+                format: !!python/name:pymdownx.superfences.fence_code_format
+      ```
+
+      (`pymdownx.superfences` est déjà présent, il lui manque les `custom_fences` ;
+      Material embarque Mermaid, aucune dépendance à ajouter)
+- [ ] Vérifier que `mkdocs build --strict` passe toujours après le changement
+- [ ] Schémas à produire, par page :
+
+| Page | Diagramme | Type Mermaid |
+|------|-----------|--------------|
+| [architecture.md](docs/development/architecture.md) | Vue d'ensemble : navigateurs → Socket.io → `server.js` → `rooms` / `playerRooms` | `flowchart` |
+| [architecture.md](docs/development/architecture.md) | Cycle de vie d'un salon : création → lobby → en jeu → fin → rejouer / salon vide | `stateDiagram-v2` |
+| [architecture.md](docs/development/architecture.md) | Les 7 hooks de dispatch et qui les appelle | `flowchart` |
+| [architecture.md](docs/development/architecture.md) | Reconnexion : refresh navigateur → `sendReconnectState()` → état privé restitué | `sequenceDiagram` |
+| [adding-a-game.md](docs/development/adding-a-game.md) | Les 14 points d'intégration serveur + client | `flowchart` |
+| [mongolpuri.md](docs/games/mongolpuri.md) | Boucle nuit → jour → vote → élimination → conditions de victoire | `stateDiagram-v2` |
+| [scribble.md](docs/games/scribble.md) | Un tour : choix du mot → dessin → devinettes → score → rotation | `sequenceDiagram` |
+| [uno.md](docs/games/uno.md) | Résolution d'un tour : cartes jouables, +2/+4 en chaîne, sens de jeu | `flowchart` |
+| [quiz.md](docs/games/quiz.md) | Récupération opentdb + boucle de retry sur rate-limit | `sequenceDiagram` |
+| [tictactoe.md](docs/games/tictactoe.md) | Bracket de tournoi 3-8 joueurs (`buildTournamentRounds`) | `flowchart` |
+| [network.md](docs/getting-started/network.md) | Découverte mDNS : hôte → `gamenight.local` → clients du LAN | `flowchart` |
+| [ci-cd.md](docs/development/ci-cd.md) | Pipeline : hooks → `node --check` → matrice Node → build Docker → Trivy → release | `flowchart LR` |
+
+- [ ] ⚠️ Les diagrammes doivent rester **lisibles en thème sombre** : ne pas coder de
+      couleurs en dur, laisser Material appliquer son thème Mermaid
+- [ ] Ne pas faire de diagramme là où une liste suffit — un schéma faux ou périmé est
+      pire que pas de schéma
+
+### ✍️ Contenu : ce qui manque en plus des visuels
+
+- [ ] Page **FAQ / dépannage** : « mes amis ne voient pas le salon », « `gamenight.local`
+      ne résout pas », « le Quiz reste bloqué au chargement », « le port 4000 est pris »
+- [ ] Page **Configuration** listant les variables d'environnement — à écrire en même
+      temps que la section `.env` ci-dessus
+- [ ] [games/index.md](docs/games/index.md) : tableau comparatif (joueurs, durée,
+      complexité, internet requis) pour choisir un jeu en 10 secondes
+- [ ] Chaque page de jeu suit le **même gabarit** : capture → le jeu en une phrase →
+      joueurs et durée → règles → réglages du lobby → astuces → événements socket
+- [ ] Documenter les réglages de lobby de chaque jeu — ils sont dans le code
+      (`SETTINGS_SCHEMA`) et nulle part dans la doc
+- [ ] Une page **Changelog** alimentée par le `CHANGELOG.md` généré par `cz bump`
+      (via `pymdownx.snippets`, déjà actif) plutôt qu'un doublon à maintenir
+- [ ] Traduire la doc ? **Mon avis : pas tout de suite.** Le plugin `i18n` de Material
+      double le coût de chaque page. À reconsidérer une fois l'app traduite et la doc
+      stabilisée
+
+### 🛠️ Confort et qualité
+
+- [ ] Plugins à ajouter dans [mkdocs.yml](mkdocs.yml) et `requirements-docs.txt` :
+      `glightbox` (zoom images), `git-revision-date-localized` (date de mise à jour en
+      pied de page), `minify` (poids)
+- [ ] Vérificateur de liens morts en CI — `mkdocs build --strict` ne détecte pas les
+      liens externes cassés
+- [ ] Cartes sociales (`social` de Material) pour les aperçus Discord/Slack au partage
+- [ ] ⚠️ Toute capture devient fausse dès que l'UI change : ajouter « mettre à jour la
+      capture si l'écran change » à la checklist d'ajout de jeu, et dater les captures
+      dans un `docs/assets/screenshots/README.md`
 
 ---
 
