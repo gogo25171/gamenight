@@ -143,7 +143,8 @@ Aucun bénéfice pour le joueur par rapport à l'option A.
 
 Points d'intégration réels dans le code (exemple avec `monjeu`).
 
-**Serveur — [server.js](server.js)**
+### Serveur — [server.js](server.js)
+
 - [ ] `defaultSettings()` ([server.js:19](server.js#L19)) — ajouter `case 'monjeu'`
 - [ ] `validateSettings()` ([server.js:30](server.js#L30)) — valider les réglages entrants
 - [ ] `minPlayers()` ([server.js:68](server.js#L68)) — nombre minimum de joueurs
@@ -153,7 +154,8 @@ Points d'intégration réels dans le code (exemple avec `monjeu`).
 - [ ] `onPlayerDisconnect()` ([server.js:344](server.js#L344)) — que se passe-t-il si un joueur part
 - [ ] Nouvelle section `// ── MONJEU ──` : `startMonjeu`, `monjeuAction`, `monjeuPublic`, `endMonjeu`
 
-**Client**
+### Client
+
 - [ ] `public/index.html` — carte `<div class="game-card" data-game="monjeu">` (~ligne 22)
 - [ ] `public/index.html` — vue `<div id="view-monjeu" class="view">`
 - [ ] `public/index.html` — onglet règles `data-game="monjeu"` + `<div id="rules-monjeu">`
@@ -162,7 +164,8 @@ Points d'intégration réels dans le code (exemple avec `monjeu`).
 - [ ] `public/js/app.js` — schéma de settings (~ligne 78) et listeners socket (~ligne 647)
 - [ ] `public/js/app.js` — ajouter le nom dans `gameNames` ([app.js:533](public/js/app.js#L533))
 
-**Finition**
+### Finition
+
 - [ ] Tableau des jeux + section « How to Play » dans [README.md](README.md)
 - [ ] Badge `games-N` du README à incrémenter
 - [ ] Tester : reconnexion en pleine partie · départ d'un joueur · rejouer · spectateurs
