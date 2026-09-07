@@ -1,0 +1,30 @@
+services:
+  # Mode par défaut : réseau bridge + port publié.
+  #   docker compose up -d   →   http://<ip-de-la-machine>:4000
+  # Le mDNS (gamenight.local) ne traverse pas le bridge : utilisez l'IP,
+  # ou le profil "mdns" ci-dessous si vous êtes sous Linux.
+  gamenight:
+    build: .
+    image: gamenight:latest
+    container_name: gamenight
+    restart: unless-stopped
+    init: true
+    environment:
+      PORT: 4000
+    ports:
+      - "${PORT:-4000}:4000"
+
+  # Mode réseau hôte : active la découverte mDNS → http://gamenight.local:4000
+  #   docker compose --profile mdns up -d
+  # Linux uniquement (network_mode: host n'a pas d'effet sur Docker Desktop
+  # Windows / macOS — restez sur le service par défaut dans ce cas).
+  gamenight-mdns:
+    profiles: ["mdns"]
+    build: .
+    image: gamenight:latest
+    container_name: gamenight-mdns
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    environment:
+      PORT: 4000
