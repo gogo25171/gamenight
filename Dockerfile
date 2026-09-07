@@ -19,11 +19,14 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json server.js ./
 COPY public ./public
 
-USER node
+# Numeric uid: the 'node' user is 1000 in the official images, and a numeric id
+# is resolvable by hosts that enforce runAsNonRoot (hadolint DL3066).
+USER 1000:1000
 
 EXPOSE 4000
 
+# JSON form (hadolint DL3025); /bin/sh -c is what expands ${PORT}.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- "http://127.0.0.1:${PORT}/" > /dev/null || exit 1
+  CMD ["/bin/sh", "-c", "wget -qO- \"http://127.0.0.1:${PORT}/\" > /dev/null || exit 1"]
 
 CMD ["node", "server.js"]

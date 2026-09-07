@@ -14,6 +14,8 @@ repos:
         # .bat and .ps1 must keep CRLF - see .gitattributes
         exclude: \.(bat|ps1)$
       - id: check-yaml
+        # mkdocs.yml uses !!python/name: tags that plain YAML cannot parse
+        exclude: ^mkdocs[.]yml$
       - id: check-json
       - id: check-merge-conflict
       - id: check-case-conflict
@@ -38,6 +40,13 @@ repos:
         language: system
         files: ^(test-tournament\.js|server\.js)$
         pass_filenames: false
+
+  # Validates the commit message against Conventional Commits
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.1.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
 
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.7

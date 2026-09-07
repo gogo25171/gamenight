@@ -5,5 +5,8 @@ default: true
 MD013: false   # line length
 MD033: false   # inline HTML (README badges)
 MD041: false   # first line does not have to be a top-level heading
+MD040: false   # README fences ASCII art with no language
+MD042: false   # README badges legitimately link to "#"
+MD046: false   # MkDocs tabbed content requires indented code blocks
 MD024:
   siblings_only: true   # CHANGELOG repeats "### Added" under each version

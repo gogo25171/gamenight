@@ -28,6 +28,36 @@ that quietly drift apart:
 - `npm ci --dry-run` fails if `package-lock.json` has drifted from
   `package.json`.
 
+## `security.yml` — Trivy
+
+Runs on every push and pull request, plus every Monday at 04:00 UTC — the
+schedule matters, because a dependency that was clean when you merged it can be
+the subject of an advisory a week later.
+
+| Job | Scans |
+|-----|-------|
+| **trivy-repo** | The repository: dependency vulnerabilities, hard-coded secrets and misconfigurations |
+| **trivy-image** | The container image that actually ships, base layer included |
+
+Results are uploaded as SARIF and appear under **Security → Code scanning**, so
+findings are tracked and de-duplicated across runs rather than buried in a log.
+
+The build only fails on **fixable** HIGH or CRITICAL findings
+(`ignore-unfixed: true`). An unfixable CVE in the Alpine base layer should show
+up in the security tab without blocking every pull request — there is nothing a
+contributor can do about it until upstream publishes a patch.
+
+Trivy complements `npm audit` rather than replacing it: `npm audit` only knows
+about npm packages, while Trivy also sees the operating-system packages inside
+the image, Dockerfile misconfigurations, and accidentally committed secrets.
+
+Run it locally the same way:
+
+```bash
+trivy fs --scanners vuln,secret,misconfig .
+docker build -t gamenight:scan . && trivy image gamenight:scan
+```
+
 ## `docs.yml` — this site
 
 On a pull request that touches `docs/` or `mkdocs.yml`, the site is built with

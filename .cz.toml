@@ -1,0 +1,15 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+
+# Reads and writes the version in package.json, so `cz bump` keeps it in step
+# with the git tag. release.yml refuses to publish when the two disagree.
+version_provider = "npm"
+tag_format = "v$version"
+
+update_changelog_on_bump = true
+changelog_file = "CHANGELOG.md"
+changelog_merge_prerelease = true
+
+# Scopes that mean something in this repository. Not enforced, just a reminder.
+# games: mongolpuri, uno, quiz, tictactoe, scribble
+# areas: lobby, room, avatars, settings, docker, docs, deps

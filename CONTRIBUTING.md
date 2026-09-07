@@ -27,9 +27,12 @@ docker compose up -d --build
 Install the pre-commit hooks once after cloning:
 
 ```bash
-pip install pre-commit
+pip install pre-commit commitizen
 pre-commit install
 ```
+
+That installs both the `pre-commit` and `commit-msg` hooks, so commit messages
+are validated too.
 
 The hooks run automatically on `git commit`. To check the whole tree by hand:
 
@@ -77,15 +80,65 @@ There is no linter or formatter config — match the surrounding code:
 
 ## Commit messages
 
-Write a short imperative subject line under ~70 characters, then a blank line
-and a body if the change needs explaining.
+This repository follows [Conventional Commits](https://www.conventionalcommits.org),
+enforced by [Commitizen](https://commitizen-tools.github.io/commitizen/).
 
+Rather than writing the format by hand, let the prompt build it:
+
+```bash
+pip install commitizen
+git add .
+cz commit          # or: cz c
 ```
-Add Connect Four with tournament support
+
+The result looks like this:
+
+```text
+feat(connect4): add Connect Four with tournament support
 
 Reuses the tictactoe bracket so byes and phantom matches behave
 identically. Board is 7x6 and win detection scans four directions.
+
+Closes #42
 ```
+
+### Types
+
+| Type | Use it for |
+|------|-----------|
+| `feat` | A new game, or a new capability in an existing one |
+| `fix` | A bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, whitespace — no behaviour change |
+| `refactor` | Restructuring that neither fixes a bug nor adds a feature |
+| `perf` | A performance improvement |
+| `test` | Adding or correcting tests |
+| `build` | Dependencies, `package.json`, the Dockerfile |
+| `ci` | Workflows and tooling configuration |
+| `chore` | Anything else |
+
+Useful scopes: a game (`mongolpuri`, `uno`, `quiz`, `tictactoe`, `scribble`) or
+an area (`lobby`, `room`, `avatars`, `settings`, `docker`, `docs`, `deps`).
+
+A breaking change gets a `!` after the type — `feat(room)!: ...` — and a
+`BREAKING CHANGE:` paragraph in the body.
+
+The `commit-msg` hook rejects a message that does not parse, and CI re-checks
+every commit in a pull request. If a commit is already written, amend it with
+`git commit --amend` rather than adding a fix-up commit.
+
+### Releases
+
+Because the history is machine-readable, releasing is one command:
+
+```bash
+cz bump            # bumps package.json, updates CHANGELOG.md, creates the tag
+git push --follow-tags
+```
+
+The version bump is derived from the commits since the last tag: a `fix` gives a
+patch, a `feat` a minor, a breaking change a major. Pushing the tag triggers
+`release.yml`, which publishes the container image.
 
 ## Pull requests
 
@@ -98,7 +151,8 @@ identically. Board is 7x6 and win detection scans four directions.
 5. Open the PR and fill in the template.
 
 CI runs on every push and pull request: syntax checks across Node 18/20/22, the
-tournament test, an `npm audit`, a Docker image build, and a docs build.
+tournament test, an `npm audit`, a Docker image build, a docs build, and Trivy
+scans of both the repository and the container image.
 
 ## Reporting bugs
 

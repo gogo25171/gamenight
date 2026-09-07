@@ -13,8 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docker-compose.yml` with an `mdns` profile for host networking
 - GitHub Actions CI: syntax checks on Node 18/20/22, tournament test,
   dependency audit, Docker build, docs build
+- Trivy security workflow scanning the repository and the container image
+  for vulnerabilities, secrets and misconfigurations, with results in the
+  code scanning tab and a weekly scheduled run
 - Documentation site built with MkDocs Material and published to GitHub Pages
 - `pre-commit` hooks for whitespace, YAML/JSON validation and JavaScript syntax
+- Commitizen: Conventional Commits enforced by a `commit-msg` hook and by CI,
+  with `cz bump` driving version bumps and this changelog
 - `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue and
   pull request templates
 - `TODO.md` listing candidate games and the checklist for adding one
@@ -23,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `test-tournament.js` now exits with a non-zero status when a case fails, so CI
   can detect a regression
+
+### Security
+
+- Updated `socket.io-parser`, resolving a high-severity memory-exhaustion
+  advisory ([GHSA-2m8v-j782-fhvr](https://github.com/advisories/GHSA-2m8v-j782-fhvr))
+  reachable from any connected client
 
 ## [1.0.0]
 

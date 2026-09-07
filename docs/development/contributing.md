@@ -16,7 +16,7 @@ npm run dev
 Then install the hooks:
 
 ```bash
-pip install pre-commit
+pip install pre-commit commitizen
 pre-commit install
 ```
 
@@ -34,12 +34,26 @@ pre-commit install
 | `actionlint` | Mistakes in GitHub Actions workflows |
 | `hadolint` | Dockerfile problems |
 | `markdownlint` | Malformed Markdown |
+| `commitizen` | A commit message that does not follow Conventional Commits |
 
 Run everything by hand at any time:
 
 ```bash
 pre-commit run --all-files
 ```
+
+## Commit messages
+
+[Conventional Commits](https://www.conventionalcommits.org), built for you by
+Commitizen:
+
+```bash
+git add .
+cz commit
+```
+
+Full list of types and scopes in
+[CONTRIBUTING.md](https://github.com/gogo25171/gamenight/blob/main/CONTRIBUTING.md#commit-messages).
 
 ## Style
 
