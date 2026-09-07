@@ -9,83 +9,90 @@
 </head>
 <body>
 
+<!-- ══════════════════════ LANGUAGE SWITCHER (all screens) ══════════════════════ -->
+<div id="lang-switcher" class="lang-switcher">
+  <button id="btn-lang" class="lang-btn" aria-haspopup="true" aria-expanded="false"
+          data-i18n-title="lang.choose" data-i18n-aria-label="lang.choose" title="Language">🌐</button>
+  <div id="lang-menu" class="lang-menu hidden" role="menu"></div>
+</div>
+
 <!-- ══════════════════════ HOME ══════════════════════ -->
 <div id="view-home" class="view active">
   <header class="home-header">
     <div class="logo">🎮 GameNight</div>
-    <p class="tagline">Party games, no app required</p>
+    <p class="tagline" data-i18n="home.tagline">Party games, no app required</p>
   </header>
 
   <div class="game-selector">
-    <h2>Choose a game</h2>
+    <h2 data-i18n="home.chooseGame">Choose a game</h2>
     <div class="game-cards">
       <div class="game-card" data-game="tictactoe">
         <div class="game-icon">⭕</div>
-        <h3>Tic Tac Toe</h3>
-        <p>Classic 1v1 showdown</p>
-        <span class="badge">2 players</span>
+        <h3 data-i18n="game.tictactoe.name">Tic Tac Toe</h3>
+        <p data-i18n="game.tictactoe.desc">Classic 1v1 showdown</p>
+        <span class="badge" data-i18n="game.tictactoe.players">2 players</span>
       </div>
       <div class="game-card" data-game="killerdoctor">
         <div class="game-icon">🔪</div>
-        <h3>Mongolpuri</h3>
-        <p>Social deduction party game</p>
-        <span class="badge">4–15 players</span>
+        <h3 data-i18n="game.killerdoctor.name">Mongolpuri</h3>
+        <p data-i18n="game.killerdoctor.desc">Social deduction party game</p>
+        <span class="badge" data-i18n="game.killerdoctor.players">4–15 players</span>
       </div>
       <div class="game-card" data-game="scribble">
         <div class="game-icon">🎨</div>
-        <h3>Scribble</h3>
-        <p>Draw and guess words</p>
-        <span class="badge">3+ players</span>
+        <h3 data-i18n="game.scribble.name">Scribble</h3>
+        <p data-i18n="game.scribble.desc">Draw and guess words</p>
+        <span class="badge" data-i18n="game.scribble.players">3+ players</span>
       </div>
       <div class="game-card" data-game="uno">
         <div class="game-icon">🃏</div>
-        <h3>UNO</h3>
-        <p>Classic card game</p>
-        <span class="badge">2–10 players</span>
+        <h3 data-i18n="game.uno.name">UNO</h3>
+        <p data-i18n="game.uno.desc">Classic card game</p>
+        <span class="badge" data-i18n="game.uno.players">2–10 players</span>
       </div>
       <div class="game-card" data-game="quiz">
         <div class="game-icon">❓</div>
-        <h3>Quiz</h3>
-        <p>15-question trivia challenge</p>
-        <span class="badge">2+ players</span>
+        <h3 data-i18n="game.quiz.name">Quiz</h3>
+        <p data-i18n="game.quiz.desc">15-question trivia challenge</p>
+        <span class="badge" data-i18n="game.quiz.players">2+ players</span>
       </div>
     </div>
   </div>
 
   <div class="join-box">
     <div class="form-row">
-      <input id="inp-name" type="text" placeholder="Your name..." maxlength="20" autocomplete="off">
+      <input id="inp-name" type="text" placeholder="Your name..." data-i18n-placeholder="home.namePlaceholder" maxlength="20" autocomplete="off">
     </div>
     <div class="avatar-section">
       <div class="avatar-preview-row">
         <span id="avatar-preview-emoji" class="avatar-preview-emoji"></span>
         <span id="avatar-preview-name" class="avatar-preview-name"></span>
-        <button id="btn-change-avatar" class="btn-change-avatar">Change</button>
+        <button id="btn-change-avatar" class="btn-change-avatar" data-i18n="home.change">Change</button>
       </div>
     </div>
     <div class="home-actions">
       <div class="home-card">
         <span class="home-card-icon">🎮</span>
         <div class="home-card-text">
-          <div class="home-card-title">Create a Room</div>
-          <div class="home-card-sub">Host a new game for your friends</div>
+          <div class="home-card-title" data-i18n="home.createTitle">Create a Room</div>
+          <div class="home-card-sub" data-i18n="home.createSub">Host a new game for your friends</div>
         </div>
-        <button id="btn-create" class="btn-primary btn-sm">Create</button>
+        <button id="btn-create" class="btn-primary btn-sm" data-i18n="home.create">Create</button>
       </div>
-      <div class="home-or">or</div>
+      <div class="home-or" data-i18n="home.or">or</div>
       <div class="home-card">
         <span class="home-card-icon">🚪</span>
         <div class="home-card-text">
-          <div class="home-card-title">Join a Room</div>
+          <div class="home-card-title" data-i18n="home.joinTitle">Join a Room</div>
           <div class="row-inline" style="margin-top:6px">
-            <input id="inp-code" type="text" placeholder="Room code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
-            <button id="btn-join" class="btn-primary btn-sm">Join</button>
+            <input id="inp-code" type="text" placeholder="Room code" data-i18n-placeholder="home.codePlaceholder" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+            <button id="btn-join" class="btn-primary btn-sm" data-i18n="home.join">Join</button>
           </div>
         </div>
       </div>
     </div>
 
-    <button id="btn-rules-home" class="btn-rules-link">📖 How to Play</button>
+    <button id="btn-rules-home" class="btn-rules-link" data-i18n="home.howToPlay">📖 How to Play</button>
     <div id="home-error" class="error-msg hidden"></div>
   </div>
 </div>
@@ -95,17 +102,17 @@
   <div class="lobby-container">
     <div class="lobby-header">
       <div>
-        <h2 id="lobby-title">Lobby</h2>
+        <h2 id="lobby-title" data-i18n="lobby.title">Lobby</h2>
         <div class="room-code-row">
-          <span>Room Code:</span>
+          <span data-i18n="lobby.roomCode">Room Code:</span>
           <strong id="lobby-code" class="code-display"></strong>
-          <button id="btn-copy" class="btn-icon" title="Copy code">⧉</button>
-          <button id="btn-share" class="btn-icon" title="Copy invite link">🔗</button>
+          <button id="btn-copy" class="btn-icon" data-i18n-title="lobby.copyCode" title="Copy code">⧉</button>
+          <button id="btn-share" class="btn-icon" data-i18n-title="lobby.copyLink" title="Copy invite link">🔗</button>
         </div>
       </div>
       <div class="lobby-header-actions">
-        <button id="btn-rules-lobby" class="btn-ghost btn-sm">📖 Rules</button>
-        <button id="btn-leave" class="btn-ghost">Leave</button>
+        <button id="btn-rules-lobby" class="btn-ghost btn-sm" data-i18n="lobby.rules">📖 Rules</button>
+        <button id="btn-leave" class="btn-ghost" data-i18n="lobby.leave">Leave</button>
       </div>
     </div>
 
@@ -113,21 +120,21 @@
 
     <!-- Session scoreboard (visible after first game) -->
     <div id="lobby-session-stats" class="session-stats hidden">
-      <div class="session-stats-header">Session Scoreboard</div>
+      <div class="session-stats-header" data-i18n="lobby.sessionScoreboard">Session Scoreboard</div>
       <div class="stats-body"></div>
     </div>
 
     <!-- Settings panel -->
     <div class="settings-panel" id="lobby-settings-panel">
       <button class="settings-toggle" id="btn-settings-toggle">
-        <span>⚙️ Game Settings</span>
+        <span data-i18n="lobby.gameSettings">⚙️ Game Settings</span>
         <span class="settings-chevron" id="settings-chevron">▾</span>
       </button>
       <div id="lobby-settings-body" class="settings-body hidden">
         <div id="lobby-settings-fields" class="settings-fields"></div>
         <div id="settings-host-actions" class="settings-host-actions hidden">
-          <button id="btn-save-settings" class="btn-primary btn-sm">Save Settings</button>
-          <span id="settings-saved-msg" class="settings-saved hidden">✓ Saved</span>
+          <button id="btn-save-settings" class="btn-primary btn-sm" data-i18n="lobby.saveSettings">Save Settings</button>
+          <span id="settings-saved-msg" class="settings-saved hidden" data-i18n="lobby.saved">✓ Saved</span>
         </div>
       </div>
     </div>
@@ -135,7 +142,7 @@
     <div class="lobby-footer">
       <p id="lobby-status" class="muted"></p>
       <div class="lobby-actions">
-        <button id="btn-start" class="btn-primary btn-lg" disabled>Start Game</button>
+        <button id="btn-start" class="btn-primary btn-lg" disabled data-i18n="lobby.startGame">Start Game</button>
       </div>
     </div>
   </div>
@@ -145,27 +152,27 @@
 <div id="view-tictactoe" class="view">
   <div class="ttt-container">
     <div class="ttt-header">
-      <h2>Tic Tac Toe</h2>
-      <button class="btn-ghost btn-exit" id="ttt-leave">🚪 Exit</button>
+      <h2 data-i18n="game.tictactoe.name">Tic Tac Toe</h2>
+      <button class="btn-ghost btn-exit" id="ttt-leave" data-i18n="common.exit">🚪 Exit</button>
     </div>
 
     <!-- Tournament info (3+ players) -->
     <div id="ttt-tournament-info" class="ttt-tournament-info hidden">
-      <div class="ttt-tournament-badge">🏆 Tournament</div>
-      <div id="ttt-match-info" class="ttt-match-info">Setting up…</div>
+      <div class="ttt-tournament-badge" data-i18n="ttt.tournament">🏆 Tournament</div>
+      <div id="ttt-match-info" class="ttt-match-info" data-i18n="ttt.settingUp">Setting up…</div>
       <div id="ttt-bracket" class="ttt-bracket"></div>
     </div>
 
     <div class="ttt-scoreboard">
       <div class="ttt-score-card" id="ttt-score-X">
         <div class="ttt-symbol x-sym">✕</div>
-        <div id="ttt-name-X">Player X</div>
+        <div id="ttt-name-X" data-i18n="ttt.playerX">Player X</div>
         <div id="ttt-pts-X" class="score-pts">0</div>
       </div>
-      <div class="ttt-vs">VS</div>
+      <div class="ttt-vs" data-i18n="ttt.vs">VS</div>
       <div class="ttt-score-card" id="ttt-score-O">
         <div class="ttt-symbol o-sym">○</div>
-        <div id="ttt-name-O">Player O</div>
+        <div id="ttt-name-O" data-i18n="ttt.playerO">Player O</div>
         <div id="ttt-pts-O" class="score-pts">0</div>
       </div>
     </div>
@@ -189,13 +196,13 @@
     <div id="ttt-result" class="ttt-result hidden">
       <div id="ttt-result-text"></div>
       <div class="ttt-result-actions" id="ttt-host-only" style="display:none">
-        <button id="btn-ttt-again" class="btn-primary">Next Game</button>
-        <button id="btn-ttt-new-match" class="btn-primary hidden">New Match</button>
-        <button id="btn-ttt-lobby" class="btn-ghost">Back to Lobby</button>
+        <button id="btn-ttt-again" class="btn-primary" data-i18n="ttt.nextGame">Next Game</button>
+        <button id="btn-ttt-new-match" class="btn-primary hidden" data-i18n="ttt.newMatch">New Match</button>
+        <button id="btn-ttt-lobby" class="btn-ghost" data-i18n="common.backToLobby">Back to Lobby</button>
       </div>
     </div>
 
-    <div id="ttt-spectating" class="spectator-badge hidden">👁 Spectating</div>
+    <div id="ttt-spectating" class="spectator-badge hidden" data-i18n="common.spectating">👁 Spectating</div>
   </div>
 </div>
 
@@ -205,23 +212,23 @@
 
     <!-- Side panel -->
     <aside class="kd-sidebar">
-      <button class="btn-exit btn-exit-kd" id="kd-btn-exit" title="Exit Game">🚪 Exit</button>
+      <button class="btn-exit btn-exit-kd" id="kd-btn-exit" data-i18n-title="common.exitGame" title="Exit Game" data-i18n="common.exit">🚪 Exit</button>
       <div class="kd-role-card" id="kd-role-card">
-        <div class="role-label">Your Role</div>
+        <div class="role-label" data-i18n="kd.yourRole">Your Role</div>
         <div id="kd-role-character" class="role-character"></div>
         <div id="kd-role-name" class="role-name">—</div>
         <div id="kd-role-desc" class="role-desc"></div>
-        <button id="kd-toggle-role" class="btn-ghost btn-sm">Show</button>
+        <button id="kd-toggle-role" class="btn-ghost btn-sm" data-i18n="kd.show">Show</button>
       </div>
-      <div id="kd-you-status" class="kd-you-status">🟢 Alive</div>
+      <div id="kd-you-status" class="kd-you-status" data-i18n="kd.alive">🟢 Alive</div>
 
       <div class="kd-player-list-wrap">
-        <h4>Players</h4>
+        <h4 data-i18n="kd.players">Players</h4>
         <div id="kd-player-list" class="kd-player-list"></div>
       </div>
 
       <div class="kd-history-wrap">
-        <h4>History</h4>
+        <h4 data-i18n="kd.history">History</h4>
         <div id="kd-history" class="kd-history"></div>
       </div>
     </aside>
@@ -232,9 +239,9 @@
       <div id="kd-phase-reveal" class="kd-phase active">
         <div class="phase-splash night-splash">
           <div class="phase-icon anim-pulse">🌙</div>
-          <h2>Roles Assigned</h2>
-          <p>Check your secret role on the left. Keep it hidden from others!</p>
-          <p class="muted">Night begins in a few seconds…</p>
+          <h2 data-i18n="kd.rolesAssigned">Roles Assigned</h2>
+          <p data-i18n="kd.rolesAssignedSub">Check your secret role on the left. Keep it hidden from others!</p>
+          <p class="muted" data-i18n="kd.nightSoon">Night begins in a few seconds…</p>
         </div>
       </div>
 
@@ -243,16 +250,16 @@
         <div class="night-bg">
           <div class="phase-splash">
             <div class="phase-icon">🌑</div>
-            <h2 id="kd-night-title">Night Falls</h2>
-            <p id="kd-night-subtitle">The village sleeps…</p>
+            <h2 id="kd-night-title" data-i18n="kd.nightFalls">Night Falls</h2>
+            <p id="kd-night-subtitle" data-i18n="kd.villageSleeps">The village sleeps…</p>
           </div>
 
           <div id="kd-night-action" class="kd-action-panel hidden">
             <div id="kd-action-title" class="action-title"></div>
             <div id="kd-action-desc" class="action-desc"></div>
             <div id="kd-action-targets" class="target-grid"></div>
-            <div id="kd-action-done" class="action-done hidden">✓ Action submitted</div>
-            <button id="kd-villager-awake" class="kd-villager-awake-btn hidden">👁️ I'm awake</button>
+            <div id="kd-action-done" class="action-done hidden" data-i18n="kd.actionSubmitted">✓ Action submitted</div>
+            <button id="kd-villager-awake" class="kd-villager-awake-btn hidden" data-i18n="kd.imAwake">👁️ I'm awake</button>
             <div id="kd-night-progress" class="kd-night-progress hidden"></div>
           </div>
 
@@ -266,7 +273,7 @@
       <div id="kd-phase-night-result" class="kd-phase">
         <div class="phase-splash dawn-splash">
           <div class="phase-icon anim-pop">🌅</div>
-          <h2>Dawn Breaks</h2>
+          <h2 data-i18n="kd.dawnBreaks">Dawn Breaks</h2>
           <p id="kd-night-msg" class="result-message"></p>
           <div id="kd-night-victim" class="night-victim-display"></div>
         </div>
@@ -277,19 +284,19 @@
         <div class="day-layout">
           <div class="day-header">
             <div>
-              <h2 id="kd-day-title">Day Discussion</h2>
-              <p class="muted">Debate who the Killer might be</p>
+              <h2 id="kd-day-title" data-i18n="kd.dayDiscussion">Day Discussion</h2>
+              <p class="muted" data-i18n="kd.debateWho">Debate who the Killer might be</p>
             </div>
             <div class="timer-badge">
-              <div class="timer-label">Time</div>
+              <div class="timer-label" data-i18n="common.time">Time</div>
               <div id="kd-day-timer" class="timer-display">2:00</div>
             </div>
           </div>
           <div class="chat-box">
             <div id="kd-chat-messages" class="chat-messages"></div>
             <div class="chat-input-row">
-              <input id="kd-chat-input" type="text" placeholder="Say something…" maxlength="200" autocomplete="off">
-              <button id="kd-chat-send" class="btn-primary">Send</button>
+              <input id="kd-chat-input" type="text" placeholder="Say something…" data-i18n-placeholder="kd.chatPlaceholder" maxlength="200" autocomplete="off">
+              <button id="kd-chat-send" class="btn-primary" data-i18n="common.send">Send</button>
             </div>
           </div>
         </div>
@@ -300,18 +307,18 @@
         <div class="day-layout">
           <div class="day-header">
             <div>
-              <h2>Vote to Eliminate</h2>
-              <p class="muted">Choose who you think is the Killer</p>
+              <h2 data-i18n="kd.voteToEliminate">Vote to Eliminate</h2>
+              <p class="muted" data-i18n="kd.chooseSuspect">Choose who you think is the Killer</p>
             </div>
             <div class="timer-badge">
-              <div class="timer-label">Time</div>
+              <div class="timer-label" data-i18n="common.time">Time</div>
               <div id="kd-vote-timer" class="timer-display">1:00</div>
             </div>
           </div>
           <div id="kd-vote-progress" class="vote-progress-bar"></div>
           <div id="kd-vote-targets" class="vote-grid"></div>
-          <div id="kd-voted-notice" class="voted-notice hidden">✓ Vote cast</div>
-          <div id="kd-dead-notice" class="spectator-badge hidden">👻 You are dead — watching only</div>
+          <div id="kd-voted-notice" class="voted-notice hidden" data-i18n="kd.voteCast">✓ Vote cast</div>
+          <div id="kd-dead-notice" class="spectator-badge hidden" data-i18n="kd.deadWatching">👻 You are dead — watching only</div>
         </div>
       </div>
 
@@ -319,11 +326,11 @@
       <div id="kd-phase-vote-result" class="kd-phase">
         <div class="phase-splash">
           <div class="phase-icon anim-pop" id="kd-elim-icon">⚖️</div>
-          <h2 id="kd-elim-title">Verdict</h2>
+          <h2 id="kd-elim-title" data-i18n="kd.verdict">Verdict</h2>
           <p id="kd-elim-msg" class="result-message"></p>
           <div id="kd-elim-reveal" class="role-reveal-card hidden"></div>
           <div id="kd-vote-detail" class="vote-detail"></div>
-          <p class="muted" id="kd-next-label">Next round beginning…</p>
+          <p class="muted" id="kd-next-label" data-i18n="kd.nextRound">Next round beginning…</p>
         </div>
       </div>
 
@@ -331,13 +338,13 @@
       <div id="kd-phase-gameover" class="kd-phase">
         <div class="phase-splash gameover-splash">
           <div class="phase-icon anim-pop" id="kd-win-icon">🏆</div>
-          <h2 id="kd-win-title">Game Over</h2>
+          <h2 id="kd-win-title" data-i18n="common.gameOver">Game Over</h2>
           <p id="kd-win-reason" class="result-message"></p>
           <div id="kd-final-players" class="final-player-grid"></div>
           <div id="kd-final-history" class="final-history"></div>
           <div class="gameover-actions">
-            <button id="kd-btn-again" class="btn-primary btn-lg">Play Again</button>
-            <button id="kd-btn-lobby" class="btn-ghost">Back to Lobby</button>
+            <button id="kd-btn-again" class="btn-primary btn-lg" data-i18n="common.playAgain">Play Again</button>
+            <button id="kd-btn-lobby" class="btn-ghost" data-i18n="common.backToLobby">Back to Lobby</button>
           </div>
         </div>
       </div>
@@ -366,12 +373,12 @@
         <div class="timer-badge">
           <div id="scb-timer" class="timer-display">1:20</div>
         </div>
-        <button class="btn-exit btn-sm" id="scb-btn-exit" title="Exit Game">🚪</button>
+        <button class="btn-exit btn-sm" id="scb-btn-exit" data-i18n-title="common.exitGame" title="Exit Game">🚪</button>
       </div>
 
       <!-- Word chooser (drawer only) -->
       <div id="scb-word-chooser" class="scb-word-chooser hidden">
-        <h3>Choose a word to draw!</h3>
+        <h3 data-i18n="scb.chooseWord">Choose a word to draw!</h3>
         <div id="scb-word-options" class="scb-word-options"></div>
         <p class="muted" id="scb-choose-countdown">Auto-selecting in 15s…</p>
       </div>
@@ -381,9 +388,9 @@
       <!-- Drawing tools -->
       <div id="scb-tools" class="scb-tools hidden">
         <div class="tool-group">
-          <button class="tool-btn active" data-tool="pencil" title="Pencil">✏️</button>
-          <button class="tool-btn" data-tool="eraser" title="Eraser">🔲</button>
-          <button class="tool-btn" data-tool="fill" title="Fill">🪣</button>
+          <button class="tool-btn active" data-tool="pencil" data-i18n-title="scb.tool.pencil" title="Pencil">✏️</button>
+          <button class="tool-btn" data-tool="eraser" data-i18n-title="scb.tool.eraser" title="Eraser">🔲</button>
+          <button class="tool-btn" data-tool="fill" data-i18n-title="scb.tool.fill" title="Fill">🪣</button>
         </div>
         <div class="tool-group">
           <label class="color-swatch-wrap">
@@ -408,7 +415,7 @@
           <input type="range" id="scb-size" min="2" max="40" value="5">
           <span id="scb-size-label">5px</span>
         </div>
-        <button id="scb-clear" class="btn-danger btn-sm">Clear</button>
+        <button id="scb-clear" class="btn-danger btn-sm" data-i18n="scb.clear">Clear</button>
       </div>
     </main>
 
@@ -416,7 +423,7 @@
     <aside class="scribble-chat">
       <div id="scb-chat-messages" class="chat-messages"></div>
       <div class="chat-input-row">
-        <input id="scb-chat-input" type="text" placeholder="Type your guess…" maxlength="100" autocomplete="off">
+        <input id="scb-chat-input" type="text" placeholder="Type your guess…" data-i18n-placeholder="scb.guessPlaceholder" maxlength="100" autocomplete="off">
         <button id="scb-chat-send" class="btn-primary">↵</button>
       </div>
     </aside>
@@ -426,8 +433,8 @@
   <!-- Overlays -->
   <div id="scb-overlay-round-end" class="scb-overlay hidden">
     <div class="overlay-card">
-      <h2>Round Over!</h2>
-      <p id="scb-overlay-word">The word was: <strong></strong></p>
+      <h2 data-i18n="scb.roundOver">Round Over!</h2>
+      <p id="scb-overlay-word"><span data-i18n="scb.theWordWas">The word was:</span> <strong></strong></p>
       <div id="scb-overlay-scores" class="overlay-scores"></div>
     </div>
   </div>
@@ -435,11 +442,11 @@
   <div id="scb-overlay-gameover" class="scb-overlay hidden">
     <div class="overlay-card">
       <div class="phase-icon anim-pop">🏆</div>
-      <h2>Game Over!</h2>
+      <h2 data-i18n="common.gameOverBang">Game Over!</h2>
       <div id="scb-final-scores" class="overlay-scores"></div>
       <div class="gameover-actions">
-        <button id="scb-btn-again" class="btn-primary btn-lg">Play Again</button>
-        <button id="scb-btn-lobby" class="btn-ghost">Back to Lobby</button>
+        <button id="scb-btn-again" class="btn-primary btn-lg" data-i18n="common.playAgain">Play Again</button>
+        <button id="scb-btn-lobby" class="btn-ghost" data-i18n="common.backToLobby">Back to Lobby</button>
       </div>
     </div>
   </div>
@@ -458,8 +465,8 @@
         <span id="uno-my-avatar" class="chip-avatar"></span>
         <span id="uno-my-name" class="chip-name"></span>
       </div>
-      <h2>UNO</h2>
-      <button class="btn-exit btn-sm" id="uno-btn-exit">🚪 Exit</button>
+      <h2 data-i18n="game.uno.name">UNO</h2>
+      <button class="btn-exit btn-sm" id="uno-btn-exit" data-i18n="common.exit">🚪 Exit</button>
     </div>
 
     <div id="uno-opponents" class="uno-opponents"></div>
@@ -469,7 +476,7 @@
         <div class="uno-card uno-card-big card-back" id="uno-deck-card">
           <span id="uno-deck-count"></span>
         </div>
-        <div class="uno-area-label">Draw</div>
+        <div class="uno-area-label" data-i18n="uno.draw">Draw</div>
       </div>
       <div class="uno-pile-wrap">
         <div id="uno-discard-card" class="uno-card uno-card-big"></div>
@@ -485,20 +492,20 @@
     <div class="uno-hand-section">
       <div id="uno-hand" class="uno-hand"></div>
       <div class="uno-action-bar">
-        <button id="uno-btn-draw" class="btn-primary hidden">Draw Card</button>
-        <button id="uno-btn-pass" class="btn-ghost hidden">Pass</button>
+        <button id="uno-btn-draw" class="btn-primary hidden" data-i18n="uno.drawCard">Draw Card</button>
+        <button id="uno-btn-pass" class="btn-ghost hidden" data-i18n="uno.pass">Pass</button>
       </div>
     </div>
 
     <!-- Color chooser -->
     <div id="uno-color-chooser" class="uno-overlay-modal hidden">
       <div class="uno-modal-box">
-        <h3>Choose a color</h3>
+        <h3 data-i18n="uno.chooseColor">Choose a color</h3>
         <div class="uno-color-grid">
-          <button class="uno-color-btn uno-cb-red"    data-color="red">Red</button>
-          <button class="uno-color-btn uno-cb-yellow" data-color="yellow">Yellow</button>
-          <button class="uno-color-btn uno-cb-green"  data-color="green">Green</button>
-          <button class="uno-color-btn uno-cb-blue"   data-color="blue">Blue</button>
+          <button class="uno-color-btn uno-cb-red"    data-color="red"    data-i18n="uno.color.red">Red</button>
+          <button class="uno-color-btn uno-cb-yellow" data-color="yellow" data-i18n="uno.color.yellow">Yellow</button>
+          <button class="uno-color-btn uno-cb-green"  data-color="green"  data-i18n="uno.color.green">Green</button>
+          <button class="uno-color-btn uno-cb-blue"   data-color="blue"   data-i18n="uno.color.blue">Blue</button>
         </div>
       </div>
     </div>
@@ -510,8 +517,8 @@
         <h2 id="uno-gameover-title"></h2>
         <div id="uno-gameover-scores" class="uno-gameover-scores"></div>
         <div class="gameover-actions">
-          <button id="uno-btn-again" class="btn-primary btn-lg hidden">Play Again</button>
-          <button id="uno-btn-lobby" class="btn-ghost hidden">Back to Lobby</button>
+          <button id="uno-btn-again" class="btn-primary btn-lg hidden" data-i18n="common.playAgain">Play Again</button>
+          <button id="uno-btn-lobby" class="btn-ghost hidden" data-i18n="common.backToLobby">Back to Lobby</button>
         </div>
       </div>
     </div>
@@ -530,7 +537,7 @@
         <span id="quiz-my-name" class="chip-name"></span>
       </div>
       <div class="quiz-sidebar-section">
-        <div class="quiz-sidebar-title">Rankings</div>
+        <div class="quiz-sidebar-title" data-i18n="quiz.rankings">Rankings</div>
         <div id="quiz-sidebar-list" class="quiz-sidebar-list"></div>
       </div>
     </aside>
@@ -541,7 +548,7 @@
       <div class="quiz-header">
         <div class="quiz-progress">
           <span id="quiz-q-num">Q 1 / 15</span>
-          <span id="quiz-diff-badge" class="quiz-diff-badge">Easy</span>
+          <span id="quiz-diff-badge" class="quiz-diff-badge" data-i18n="quiz.diff.easy">Easy</span>
         </div>
         <div class="quiz-timer-wrap">
           <div class="quiz-timer-track">
@@ -549,7 +556,7 @@
           </div>
           <span id="quiz-timer-num" class="quiz-timer-num">20</span>
         </div>
-        <button class="btn-exit btn-sm" id="quiz-btn-exit">🚪 Exit</button>
+        <button class="btn-exit btn-sm" id="quiz-btn-exit" data-i18n="common.exit">🚪 Exit</button>
       </div>
 
       <div class="quiz-main">
@@ -574,8 +581,8 @@
         <h2 id="quiz-gameover-title"></h2>
         <div id="quiz-gameover-scores" class="quiz-gameover-scores"></div>
         <div class="gameover-actions">
-          <button id="quiz-btn-again" class="btn-primary btn-lg hidden">Play Again</button>
-          <button id="quiz-btn-lobby" class="btn-ghost hidden">Back to Lobby</button>
+          <button id="quiz-btn-again" class="btn-primary btn-lg hidden" data-i18n="common.playAgain">Play Again</button>
+          <button id="quiz-btn-lobby" class="btn-ghost hidden" data-i18n="common.backToLobby">Back to Lobby</button>
         </div>
       </div>
     </div>
@@ -587,164 +594,164 @@
 <div id="rules-modal" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="modal-header">
-      <h2>📖 How to Play</h2>
+      <h2 data-i18n="rules.title">📖 How to Play</h2>
       <button id="close-rules" class="btn-icon modal-close">✕</button>
     </div>
     <div class="rules-game-tabs">
-      <button class="rules-tab active" data-game="killerdoctor">🔪 Mongolpuri</button>
-      <button class="rules-tab" data-game="tictactoe">⭕ Tic Tac Toe</button>
-      <button class="rules-tab" data-game="scribble">🎨 Scribble</button>
-      <button class="rules-tab" data-game="uno">🃏 UNO</button>
-      <button class="rules-tab" data-game="quiz">🧠 Quiz</button>
+      <button class="rules-tab active" data-game="killerdoctor" data-i18n="rules.tab.killerdoctor">🔪 Mongolpuri</button>
+      <button class="rules-tab" data-game="tictactoe" data-i18n="rules.tab.tictactoe">⭕ Tic Tac Toe</button>
+      <button class="rules-tab" data-game="scribble" data-i18n="rules.tab.scribble">🎨 Scribble</button>
+      <button class="rules-tab" data-game="uno" data-i18n="rules.tab.uno">🃏 UNO</button>
+      <button class="rules-tab" data-game="quiz" data-i18n="rules.tab.quiz">🧠 Quiz</button>
     </div>
 
     <!-- Killer Doctor Rules -->
     <div id="rules-killerdoctor" class="rules-content active">
-      <p class="rules-intro">A social deduction game. One player is secretly the Killer. Can the village find them before it's too late?</p>
+      <p class="rules-intro" data-i18n="rules.kd.intro">A social deduction game. One player is secretly the Killer. Can the village find them before it's too late?</p>
 
-      <h3>🎭 Roles</h3>
+      <h3 data-i18n="rules.kd.rolesTitle">🎭 Roles</h3>
       <div class="rules-role-cards">
         <div class="rules-role-card killer">
           <div class="rules-role-icon">🔪</div>
-          <div class="rules-role-name">Killer</div>
-          <div class="rules-role-desc">Each night, secretly eliminate one player. Avoid suspicion during the day. Win by reducing players to 2.</div>
+          <div class="rules-role-name" data-i18n="rules.kd.killer">Killer</div>
+          <div class="rules-role-desc" data-i18n="rules.kd.killerDesc">Each night, secretly eliminate one player. Avoid suspicion during the day. Win by reducing players to 2.</div>
         </div>
         <div class="rules-role-card doctor">
           <div class="rules-role-icon">💉</div>
-          <div class="rules-role-name">Doctor</div>
-          <div class="rules-role-desc">Each night, secretly protect one player (including yourself). If you save the Killer's target, nobody dies. 1 Doctor per 5 players.</div>
+          <div class="rules-role-name" data-i18n="rules.kd.doctor">Doctor</div>
+          <div class="rules-role-desc" data-i18n="rules.kd.doctorDesc">Each night, secretly protect one player (including yourself). If you save the Killer's target, nobody dies. 1 Doctor per 5 players.</div>
         </div>
         <div class="rules-role-card villager">
           <div class="rules-role-icon">🧑</div>
-          <div class="rules-role-name">Villager</div>
-          <div class="rules-role-desc">You have no special power — but your vote counts. Debate, accuse, and eliminate the Killer to win.</div>
+          <div class="rules-role-name" data-i18n="rules.kd.villager">Villager</div>
+          <div class="rules-role-desc" data-i18n="rules.kd.villagerDesc">You have no special power — but your vote counts. Debate, accuse, and eliminate the Killer to win.</div>
         </div>
       </div>
 
-      <h3>🔄 Game Flow</h3>
+      <h3 data-i18n="rules.kd.flowTitle">🔄 Game Flow</h3>
       <div class="rules-steps">
-        <div class="rules-step"><span class="step-num">1</span><div><strong>Roles assigned</strong> — Each player receives a secret role. Do not reveal it!</div></div>
-        <div class="rules-step"><span class="step-num">2</span><div><strong>Night falls</strong> — The Killer picks a victim. The Doctor picks someone to protect. Both choose in secret.</div></div>
-        <div class="rules-step"><span class="step-num">3</span><div><strong>Dawn</strong> — The result is announced: either a player was found dead, or the Doctor saved them.</div></div>
-        <div class="rules-step"><span class="step-num">4</span><div><strong>Day discussion</strong> — All living players debate and accuse. The dead can only watch.</div></div>
-        <div class="rules-step"><span class="step-num">5</span><div><strong>Vote</strong> — Everyone votes to eliminate a suspect. Most votes wins. Ties mean no elimination.</div></div>
-        <div class="rules-step"><span class="step-num">6</span><div><strong>Reveal</strong> — The eliminated player's role is revealed to all. Then night falls again.</div></div>
+        <div class="rules-step"><span class="step-num">1</span><div data-i18n-html="rules.kd.step1"><strong>Roles assigned</strong> — Each player receives a secret role. Do not reveal it!</div></div>
+        <div class="rules-step"><span class="step-num">2</span><div data-i18n-html="rules.kd.step2"><strong>Night falls</strong> — The Killer picks a victim. The Doctor picks someone to protect. Both choose in secret.</div></div>
+        <div class="rules-step"><span class="step-num">3</span><div data-i18n-html="rules.kd.step3"><strong>Dawn</strong> — The result is announced: either a player was found dead, or the Doctor saved them.</div></div>
+        <div class="rules-step"><span class="step-num">4</span><div data-i18n-html="rules.kd.step4"><strong>Day discussion</strong> — All living players debate and accuse. The dead can only watch.</div></div>
+        <div class="rules-step"><span class="step-num">5</span><div data-i18n-html="rules.kd.step5"><strong>Vote</strong> — Everyone votes to eliminate a suspect. Most votes wins. Ties mean no elimination.</div></div>
+        <div class="rules-step"><span class="step-num">6</span><div data-i18n-html="rules.kd.step6"><strong>Reveal</strong> — The eliminated player's role is revealed to all. Then night falls again.</div></div>
       </div>
 
-      <h3>🏆 Win Conditions</h3>
+      <h3 data-i18n="rules.kd.winTitle">🏆 Win Conditions</h3>
       <div class="rules-wins">
-        <div class="rules-win-card"><span class="win-icon">🏘️</span><strong>Villagers win</strong> when the Killer is voted out.</div>
-        <div class="rules-win-card"><span class="win-icon">🔪</span><strong>Killer wins</strong> when only 2 players remain alive (a tied vote means the Killer kills again).</div>
+        <div class="rules-win-card"><span class="win-icon">🏘️</span><span data-i18n-html="rules.kd.win1"><strong>Villagers win</strong> when the Killer is voted out.</span></div>
+        <div class="rules-win-card"><span class="win-icon">🔪</span><span data-i18n-html="rules.kd.win2"><strong>Killer wins</strong> when only 2 players remain alive (a tied vote means the Killer kills again).</span></div>
       </div>
 
-      <div class="rules-tip">💡 <strong>Tip:</strong> Use the <em>Hide Role</em> button if others might see your screen.</div>
+      <div class="rules-tip" data-i18n-html="rules.kd.tip">💡 <strong>Tip:</strong> Use the <em>Hide Role</em> button if others might see your screen.</div>
     </div>
 
     <!-- Tic Tac Toe Rules -->
     <div id="rules-tictactoe" class="rules-content">
-      <p class="rules-intro">The classic game of Xs and Os — now with score tracking and match formats.</p>
+      <p class="rules-intro" data-i18n="rules.ttt.intro">The classic game of Xs and Os — now with score tracking and match formats.</p>
 
-      <h3>🎯 Objective</h3>
-      <p>Get three of your symbols in a row — horizontally, vertically, or diagonally — before your opponent does.</p>
+      <h3 data-i18n="rules.ttt.objectiveTitle">🎯 Objective</h3>
+      <p data-i18n="rules.ttt.objective">Get three of your symbols in a row — horizontally, vertically, or diagonally — before your opponent does.</p>
 
-      <h3>🔄 How to Play</h3>
+      <h3 data-i18n="rules.howToPlay">🔄 How to Play</h3>
       <div class="rules-steps">
-        <div class="rules-step"><span class="step-num">1</span><div>Two players are randomly assigned <strong class="x-col">✕ (X)</strong> and <strong class="o-col">○ (O)</strong>. Others watch as spectators.</div></div>
-        <div class="rules-step"><span class="step-num">2</span><div><strong>X always goes first.</strong> Take turns clicking empty cells on the 3×3 grid.</div></div>
-        <div class="rules-step"><span class="step-num">3</span><div>The first to place three in a row <strong>wins the game</strong>. Symbols swap for the next game.</div></div>
-        <div class="rules-step"><span class="step-num">4</span><div>If all 9 cells fill up with no winner, it's a <strong>draw</strong>.</div></div>
+        <div class="rules-step"><span class="step-num">1</span><div data-i18n-html="rules.ttt.step1">Two players are randomly assigned <strong class="x-col">✕ (X)</strong> and <strong class="o-col">○ (O)</strong>. Others watch as spectators.</div></div>
+        <div class="rules-step"><span class="step-num">2</span><div data-i18n-html="rules.ttt.step2"><strong>X always goes first.</strong> Take turns clicking empty cells on the 3×3 grid.</div></div>
+        <div class="rules-step"><span class="step-num">3</span><div data-i18n-html="rules.ttt.step3">The first to place three in a row <strong>wins the game</strong>. Symbols swap for the next game.</div></div>
+        <div class="rules-step"><span class="step-num">4</span><div data-i18n-html="rules.ttt.step4">If all 9 cells fill up with no winner, it's a <strong>draw</strong>.</div></div>
       </div>
 
-      <h3>⚙️ Match Formats</h3>
+      <h3 data-i18n="rules.ttt.formatsTitle">⚙️ Match Formats</h3>
       <div class="rules-wins">
-        <div class="rules-win-card"><span class="win-icon">∞</span><strong>Free Play</strong> — play unlimited games, track score indefinitely.</div>
-        <div class="rules-win-card"><span class="win-icon">🏆</span><strong>Best of 3 / 5 / 7</strong> — first to win the majority claims the match.</div>
+        <div class="rules-win-card"><span class="win-icon">∞</span><span data-i18n-html="rules.ttt.format1"><strong>Free Play</strong> — play unlimited games, track score indefinitely.</span></div>
+        <div class="rules-win-card"><span class="win-icon">🏆</span><span data-i18n-html="rules.ttt.format2"><strong>Best of 3 / 5 / 7</strong> — first to win the majority claims the match.</span></div>
       </div>
-      <div class="rules-tip">💡 <strong>Tip:</strong> The room host sets the match format in Settings before the game starts.</div>
+      <div class="rules-tip" data-i18n-html="rules.ttt.tip">💡 <strong>Tip:</strong> The room host sets the match format in Settings before the game starts.</div>
     </div>
 
     <!-- Scribble Rules -->
     <div id="rules-scribble" class="rules-content">
-      <p class="rules-intro">One player draws a secret word while everyone else races to guess it. The faster you guess, the more points you earn.</p>
+      <p class="rules-intro" data-i18n="rules.scb.intro">One player draws a secret word while everyone else races to guess it. The faster you guess, the more points you earn.</p>
 
-      <h3>🔄 How to Play</h3>
+      <h3 data-i18n="rules.howToPlay">🔄 How to Play</h3>
       <div class="rules-steps">
-        <div class="rules-step"><span class="step-num">1</span><div>Each round, one player becomes the <strong>Drawer</strong>. They're shown 3 secret words and must choose one.</div></div>
-        <div class="rules-step"><span class="step-num">2</span><div>Everyone else sees only <strong>_ _ _ _ _</strong> (blanks) and must <strong>type their guess</strong> in the chat.</div></div>
-        <div class="rules-step"><span class="step-num">3</span><div>Correct guesses earn points based on <strong>how quickly</strong> you answered. Hints appear after 30s and 55s.</div></div>
-        <div class="rules-step"><span class="step-num">4</span><div>The <strong>Drawer earns points</strong> for each player who guesses correctly. Draw clearly!</div></div>
-        <div class="rules-step"><span class="step-num">5</span><div>The round ends when time runs out or everyone has guessed. Roles rotate — everyone gets a turn to draw.</div></div>
-        <div class="rules-step"><span class="step-num">6</span><div>After all rounds, the <strong>highest scorer wins</strong> the game.</div></div>
+        <div class="rules-step"><span class="step-num">1</span><div data-i18n-html="rules.scb.step1">Each round, one player becomes the <strong>Drawer</strong>. They're shown 3 secret words and must choose one.</div></div>
+        <div class="rules-step"><span class="step-num">2</span><div data-i18n-html="rules.scb.step2">Everyone else sees only <strong>_ _ _ _ _</strong> (blanks) and must <strong>type their guess</strong> in the chat.</div></div>
+        <div class="rules-step"><span class="step-num">3</span><div data-i18n-html="rules.scb.step3">Correct guesses earn points based on <strong>how quickly</strong> you answered. Hints appear after 30s and 55s.</div></div>
+        <div class="rules-step"><span class="step-num">4</span><div data-i18n-html="rules.scb.step4">The <strong>Drawer earns points</strong> for each player who guesses correctly. Draw clearly!</div></div>
+        <div class="rules-step"><span class="step-num">5</span><div data-i18n-html="rules.scb.step5">The round ends when time runs out or everyone has guessed. Roles rotate — everyone gets a turn to draw.</div></div>
+        <div class="rules-step"><span class="step-num">6</span><div data-i18n-html="rules.scb.step6">After all rounds, the <strong>highest scorer wins</strong> the game.</div></div>
       </div>
 
-      <h3>🎨 Drawing Tools</h3>
+      <h3 data-i18n="rules.scb.toolsTitle">🎨 Drawing Tools</h3>
       <div class="rules-tools-grid">
-        <div class="rules-tool"><span>✏️</span><div><strong>Pencil</strong> — free-draw. Adjust color and brush size.</div></div>
-        <div class="rules-tool"><span>🔲</span><div><strong>Eraser</strong> — erase parts of your drawing.</div></div>
-        <div class="rules-tool"><span>🪣</span><div><strong>Fill</strong> — flood-fill an area with your chosen color.</div></div>
-        <div class="rules-tool"><span>🗑️</span><div><strong>Clear</strong> — wipe the canvas and start over.</div></div>
+        <div class="rules-tool"><span>✏️</span><div data-i18n-html="rules.scb.tool1"><strong>Pencil</strong> — free-draw. Adjust color and brush size.</div></div>
+        <div class="rules-tool"><span>🔲</span><div data-i18n-html="rules.scb.tool2"><strong>Eraser</strong> — erase parts of your drawing.</div></div>
+        <div class="rules-tool"><span>🪣</span><div data-i18n-html="rules.scb.tool3"><strong>Fill</strong> — flood-fill an area with your chosen color.</div></div>
+        <div class="rules-tool"><span>🗑️</span><div data-i18n-html="rules.scb.tool4"><strong>Clear</strong> — wipe the canvas and start over.</div></div>
       </div>
 
-      <div class="rules-tip">💡 <strong>Tip:</strong> Once you guess correctly you can't chat — don't spoil it for others!</div>
+      <div class="rules-tip" data-i18n-html="rules.scb.tip">💡 <strong>Tip:</strong> Once you guess correctly you can't chat — don't spoil it for others!</div>
     </div>
 
     <!-- UNO Rules -->
     <div id="rules-uno" class="rules-content">
-      <p class="rules-intro">Classic card-matching game. Be the first to empty your hand and shout UNO when you're down to one card!</p>
+      <p class="rules-intro" data-i18n="rules.uno.intro">Classic card-matching game. Be the first to empty your hand and shout UNO when you're down to one card!</p>
 
-      <h3>🃏 Card Types</h3>
+      <h3 data-i18n="rules.uno.cardsTitle">🃏 Card Types</h3>
       <div class="rules-role-cards">
         <div class="rules-role-card">
           <div class="rules-role-icon">🔢</div>
-          <div class="rules-role-name">Numbers (0–9)</div>
-          <div class="rules-role-desc">Play on a matching color or matching number.</div>
+          <div class="rules-role-name" data-i18n="rules.uno.numbers">Numbers (0–9)</div>
+          <div class="rules-role-desc" data-i18n="rules.uno.numbersDesc">Play on a matching color or matching number.</div>
         </div>
         <div class="rules-role-card">
           <div class="rules-role-icon">⚡</div>
-          <div class="rules-role-name">Action Cards</div>
-          <div class="rules-role-desc"><strong>Skip</strong> — next player loses turn.<br><strong>Reverse</strong> — reverses play order (2-player: acts as Skip).<br><strong>+2</strong> — next player draws 2 and loses turn.</div>
+          <div class="rules-role-name" data-i18n="rules.uno.action">Action Cards</div>
+          <div class="rules-role-desc" data-i18n-html="rules.uno.actionDesc"><strong>Skip</strong> — next player loses turn.<br><strong>Reverse</strong> — reverses play order (2-player: acts as Skip).<br><strong>+2</strong> — next player draws 2 and loses turn.</div>
         </div>
         <div class="rules-role-card">
           <div class="rules-role-icon">🌈</div>
-          <div class="rules-role-name">Wild Cards</div>
-          <div class="rules-role-desc"><strong>Wild</strong> — change to any color.<br><strong>Wild +4</strong> — change color AND next player draws 4 and loses turn.</div>
+          <div class="rules-role-name" data-i18n="rules.uno.wild">Wild Cards</div>
+          <div class="rules-role-desc" data-i18n-html="rules.uno.wildDesc"><strong>Wild</strong> — change to any color.<br><strong>Wild +4</strong> — change color AND next player draws 4 and loses turn.</div>
         </div>
       </div>
 
-      <h3>🔄 How to Play</h3>
+      <h3 data-i18n="rules.howToPlay">🔄 How to Play</h3>
       <div class="rules-steps">
-        <div class="rules-step"><span class="step-num">1</span><div>Each player is dealt <strong>7 cards</strong>. The top card of the deck is flipped to start the discard pile.</div></div>
-        <div class="rules-step"><span class="step-num">2</span><div>On your turn, play a card that <strong>matches the color or value</strong> of the top card. Wild cards can always be played.</div></div>
-        <div class="rules-step"><span class="step-num">3</span><div>Can't play? <strong>Draw one card</strong> from the deck. If the drawn card is playable, you may play it immediately or pass.</div></div>
-        <div class="rules-step"><span class="step-num">4</span><div>When you play down to <strong>1 card</strong>, the game automatically shouts UNO for you!</div></div>
-        <div class="rules-step"><span class="step-num">5</span><div>First player to play all their cards <strong>wins the game</strong>.</div></div>
+        <div class="rules-step"><span class="step-num">1</span><div data-i18n-html="rules.uno.step1">Each player is dealt <strong>7 cards</strong>. The top card of the deck is flipped to start the discard pile.</div></div>
+        <div class="rules-step"><span class="step-num">2</span><div data-i18n-html="rules.uno.step2">On your turn, play a card that <strong>matches the color or value</strong> of the top card. Wild cards can always be played.</div></div>
+        <div class="rules-step"><span class="step-num">3</span><div data-i18n-html="rules.uno.step3">Can't play? <strong>Draw one card</strong> from the deck. If the drawn card is playable, you may play it immediately or pass.</div></div>
+        <div class="rules-step"><span class="step-num">4</span><div data-i18n-html="rules.uno.step4">When you play down to <strong>1 card</strong>, the game automatically shouts UNO for you!</div></div>
+        <div class="rules-step"><span class="step-num">5</span><div data-i18n-html="rules.uno.step5">First player to play all their cards <strong>wins the game</strong>.</div></div>
       </div>
 
-      <h3>🏆 Win Condition</h3>
+      <h3 data-i18n="rules.winTitle">🏆 Win Condition</h3>
       <div class="rules-wins">
-        <div class="rules-win-card"><span class="win-icon">🃏</span><strong>Play all your cards</strong> to win. Other players' remaining cards don't score — it's a pure race.</div>
+        <div class="rules-win-card"><span class="win-icon">🃏</span><span data-i18n-html="rules.uno.win"><strong>Play all your cards</strong> to win. Other players' remaining cards don't score — it's a pure race.</span></div>
       </div>
-      <div class="rules-tip">💡 <strong>Tip:</strong> Wild +4 can only be played if you have no other matching card — but this isn't enforced digitally.</div>
+      <div class="rules-tip" data-i18n-html="rules.uno.tip">💡 <strong>Tip:</strong> Wild +4 can only be played if you have no other matching card — but this isn't enforced digitally.</div>
     </div>
 
     <!-- Quiz Rules -->
     <div id="rules-quiz" class="rules-content">
-      <p class="rules-intro">A 15-question trivia challenge pulled fresh from the internet. Answer fast — speed earns extra points!</p>
+      <p class="rules-intro" data-i18n="rules.quiz.intro">A 15-question trivia challenge pulled fresh from the internet. Answer fast — speed earns extra points!</p>
 
-      <h3>📋 Format</h3>
+      <h3 data-i18n="rules.quiz.formatTitle">📋 Format</h3>
       <div class="rules-steps">
-        <div class="rules-step"><span class="step-num">1</span><div>The game fetches <strong>5 Easy, 5 Medium, and 5 Hard</strong> questions at random from a public trivia database.</div></div>
-        <div class="rules-step"><span class="step-num">2</span><div>Each question shows <strong>4 options</strong>. Tap your answer before the <strong>20-second timer</strong> runs out.</div></div>
-        <div class="rules-step"><span class="step-num">3</span><div>Correct answers score <strong>500–1000 points</strong> based on speed. Wrong or no answer scores <strong>0</strong>.</div></div>
-        <div class="rules-step"><span class="step-num">4</span><div>After each question, the <strong>correct answer is revealed</strong> alongside the updated leaderboard.</div></div>
-        <div class="rules-step"><span class="step-num">5</span><div>The player with the <strong>highest total score</strong> after all 15 questions wins.</div></div>
+        <div class="rules-step"><span class="step-num">1</span><div data-i18n-html="rules.quiz.step1">The game fetches <strong>5 Easy, 5 Medium, and 5 Hard</strong> questions at random from a public trivia database.</div></div>
+        <div class="rules-step"><span class="step-num">2</span><div data-i18n-html="rules.quiz.step2">Each question shows <strong>4 options</strong>. Tap your answer before the <strong>20-second timer</strong> runs out.</div></div>
+        <div class="rules-step"><span class="step-num">3</span><div data-i18n-html="rules.quiz.step3">Correct answers score <strong>500–1000 points</strong> based on speed. Wrong or no answer scores <strong>0</strong>.</div></div>
+        <div class="rules-step"><span class="step-num">4</span><div data-i18n-html="rules.quiz.step4">After each question, the <strong>correct answer is revealed</strong> alongside the updated leaderboard.</div></div>
+        <div class="rules-step"><span class="step-num">5</span><div data-i18n-html="rules.quiz.step5">The player with the <strong>highest total score</strong> after all 15 questions wins.</div></div>
       </div>
 
-      <h3>🏆 Win Condition</h3>
+      <h3 data-i18n="rules.winTitle">🏆 Win Condition</h3>
       <div class="rules-wins">
-        <div class="rules-win-card"><span class="win-icon">🧠</span><strong>Highest score after 15 questions wins.</strong> Ties go to whoever was consistently faster across all correct answers.</div>
+        <div class="rules-win-card"><span class="win-icon">🧠</span><span data-i18n-html="rules.quiz.win"><strong>Highest score after 15 questions wins.</strong> Ties go to whoever was consistently faster across all correct answers.</span></div>
       </div>
-      <div class="rules-tip">💡 <strong>Tip:</strong> Questions are randomised from thousands of categories — expect anything from science to pop culture!</div>
+      <div class="rules-tip" data-i18n-html="rules.quiz.tip">💡 <strong>Tip:</strong> Questions are randomised from thousands of categories — expect anything from science to pop culture!</div>
     </div>
   </div>
 </div>
@@ -755,7 +762,7 @@
   <div id="avatar-modal-backdrop" class="avatar-modal-backdrop"></div>
   <div class="avatar-modal-box">
     <div class="avatar-modal-header">
-      <span>Pick your avatar</span>
+      <span data-i18n="avatar.pick">Pick your avatar</span>
       <button id="avatar-modal-close" class="avatar-modal-close">✕</button>
     </div>
     <div class="avatar-grid" id="avatar-picker"></div>
@@ -768,6 +775,7 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 <script src="js/tictactoe.js"></script>
 <script src="js/killerdoctor.js"></script>

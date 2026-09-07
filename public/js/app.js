@@ -52,6 +52,9 @@ const AVATARS = [
   { emoji: '🌈', name: 'Rainbow' },  { emoji: '🐹', name: 'Hamster' },
 ];
 
+// Avatar names are translated — the emoji is the identity, the name is a label.
+function avatarName(av) { return t('avatar.' + String(av?.name ?? '').toLowerCase()); }
+
 // ═══════════════════ GLOBAL STATE ═══════════════════
 const App = {
   socket: io(),
@@ -66,33 +69,40 @@ const App = {
 };
 
 // ═══════════════════ SETTINGS SCHEMA (client-side) ═══════════════════
+// Labels and option labels are i18n keys, resolved at render time so a language
+// change re-labels the lobby without touching the values the host picked.
 const SETTINGS_SCHEMA = {
   scribble: [
-    { id: 'drawTime', label: 'Draw Time', default: 45, isTime: true,
-      options: [{v:40,l:'40 sec'},{v:60,l:'60 sec'},{v:80,l:'80 sec ★'},{v:100,l:'100 sec'},{v:120,l:'2 min'}] },
-    { id: 'rounds', label: 'Rounds', default: 3,
-      options: [{v:2,l:'2 rounds'},{v:3,l:'3 rounds ★'},{v:4,l:'4 rounds'},{v:5,l:'5 rounds'}] },
-    { id: 'wordChoices', label: 'Word Choices per Turn', default: 3,
-      options: [{v:2,l:'2 words'},{v:3,l:'3 words ★'},{v:4,l:'4 words'}] },
+    { id: 'drawTime', label: 'settings.drawTime', default: 45, isTime: true,
+      options: [{v:40,k:'settings.opt.sec',p:{n:40}},{v:60,k:'settings.opt.sec',p:{n:60}},{v:80,k:'settings.opt.sec',p:{n:80},star:true},{v:100,k:'settings.opt.sec',p:{n:100}},{v:120,k:'settings.opt.min',p:{n:2}}] },
+    { id: 'rounds', label: 'settings.rounds', default: 3,
+      options: [{v:2,k:'settings.opt.rounds',p:{count:2}},{v:3,k:'settings.opt.rounds',p:{count:3},star:true},{v:4,k:'settings.opt.rounds',p:{count:4}},{v:5,k:'settings.opt.rounds',p:{count:5}}] },
+    { id: 'wordChoices', label: 'settings.wordChoices', default: 3,
+      options: [{v:2,k:'settings.opt.words',p:{count:2}},{v:3,k:'settings.opt.words',p:{count:3},star:true},{v:4,k:'settings.opt.words',p:{count:4}}] },
   ],
   killerdoctor: [
-    { id: 'discussionTime', label: 'Discussion Time', default: 45, isTime: true,
-      options: [{v:60,l:'1 min'},{v:90,l:'90 sec'},{v:120,l:'2 min ★'},{v:150,l:'2.5 min'},{v:180,l:'3 min'}] },
-    { id: 'votingTime', label: 'Voting Time', default: 45, isTime: true,
-      options: [{v:30,l:'30 sec'},{v:45,l:'45 sec'},{v:60,l:'60 sec ★'},{v:90,l:'90 sec'}] },
+    { id: 'discussionTime', label: 'settings.discussionTime', default: 45, isTime: true,
+      options: [{v:60,k:'settings.opt.min',p:{n:1}},{v:90,k:'settings.opt.sec',p:{n:90}},{v:120,k:'settings.opt.min',p:{n:2},star:true},{v:150,k:'settings.opt.min',p:{n:2.5}},{v:180,k:'settings.opt.min',p:{n:3}}] },
+    { id: 'votingTime', label: 'settings.votingTime', default: 45, isTime: true,
+      options: [{v:30,k:'settings.opt.sec',p:{n:30}},{v:45,k:'settings.opt.sec',p:{n:45}},{v:60,k:'settings.opt.sec',p:{n:60},star:true},{v:90,k:'settings.opt.sec',p:{n:90}}] },
   ],
   tictactoe: [
-    { id: 'bestOf', label: 'Match Format', default: 0,
-      options: [{v:0,l:'Free Play ★'},{v:3,l:'Best of 3'},{v:5,l:'Best of 5'},{v:7,l:'Best of 7'}] },
+    { id: 'bestOf', label: 'settings.matchFormat', default: 0,
+      options: [{v:0,k:'settings.opt.freePlay',star:true},{v:3,k:'settings.opt.bestOf',p:{n:3}},{v:5,k:'settings.opt.bestOf',p:{n:5}},{v:7,k:'settings.opt.bestOf',p:{n:7}}] },
   ],
   uno: [],
   quiz: [
-    { id: 'numQuestions', label: 'Questions', default: 15,
-      options: [{v:10,l:'10 questions'},{v:15,l:'15 questions ★'},{v:20,l:'20 questions'},{v:25,l:'25 questions'}] },
-    { id: 'timePerQuestion', label: 'Time per Question', default: 20,
-      options: [{v:10,l:'10 sec'},{v:15,l:'15 sec'},{v:20,l:'20 sec ★'},{v:30,l:'30 sec'}] },
+    { id: 'numQuestions', label: 'settings.questions', default: 15,
+      options: [{v:10,k:'settings.opt.questions',p:{count:10}},{v:15,k:'settings.opt.questions',p:{count:15},star:true},{v:20,k:'settings.opt.questions',p:{count:20}},{v:25,k:'settings.opt.questions',p:{count:25}}] },
+    { id: 'timePerQuestion', label: 'settings.timePerQuestion', default: 20,
+      options: [{v:10,k:'settings.opt.sec',p:{n:10}},{v:15,k:'settings.opt.sec',p:{n:15}},{v:20,k:'settings.opt.sec',p:{n:20},star:true},{v:30,k:'settings.opt.sec',p:{n:30}}] },
   ],
 };
+
+// Recommended values keep their ★ in the host's dropdown only.
+function optionLabel(opt, withStar = true) {
+  return t(opt.k, opt.p) + (withStar && opt.star ? ' ★' : '');
+}
 
 // ═══════════════════ VIEW MANAGEMENT ═══════════════════
 function showView(id) {
@@ -119,12 +129,12 @@ function showCountdown() {
   overlay.id = 'game-countdown';
   overlay.className = 'countdown-overlay';
   document.body.appendChild(overlay);
-  const steps = ['3','2','1','GO!'];
+  const steps = ['3','2','1', t('common.go')];
   let i = 0;
   function step() {
     overlay.innerHTML = '';
     const el = document.createElement('div');
-    el.className = 'countdown-num' + (steps[i] === 'GO!' ? ' go' : '');
+    el.className = 'countdown-num' + (i === steps.length - 1 ? ' go' : '');
     el.textContent = steps[i];
     overlay.appendChild(el);
     i++;
@@ -139,7 +149,7 @@ function showCountdown() {
 }
 
 function showConfirm(message, onConfirm, opts = {}) {
-  const { confirmText = 'Confirm', cancelText = 'Cancel', danger = false } = opts;
+  const { confirmText = t('common.confirm'), cancelText = t('common.cancel'), danger = false } = opts;
   document.getElementById('confirm-modal')?.remove();
 
   const overlay = document.createElement('div');
@@ -258,7 +268,7 @@ function renderSettings(gameType, settings, isHost) {
     wrap.className = 'settings-field';
 
     const label = document.createElement('label');
-    label.textContent = field.label;
+    label.textContent = t(field.label);
     wrap.appendChild(label);
 
     if (isHost && field.isTime) {
@@ -268,7 +278,7 @@ function renderSettings(gameType, settings, isHost) {
       input.min = 10;
       input.max = 600;
       input.value = currentVal;
-      input.placeholder = 'seconds (10–600)';
+      input.placeholder = t('settings.secondsPlaceholder');
       input.className = 'custom-time-input';
       wrap.appendChild(input);
     } else if (isHost) {
@@ -277,7 +287,7 @@ function renderSettings(gameType, settings, isHost) {
       field.options.forEach(opt => {
         const o = document.createElement('option');
         o.value = opt.v;
-        o.textContent = opt.l;
+        o.textContent = optionLabel(opt);
         if (+opt.v === +currentVal) o.selected = true;
         sel.appendChild(o);
       });
@@ -286,10 +296,10 @@ function renderSettings(gameType, settings, isHost) {
       const val = document.createElement('div');
       val.className = 'settings-val';
       if (field.isTime) {
-        val.textContent = `${currentVal}s`;
+        val.textContent = t('settings.opt.sec', { n: +currentVal });
       } else {
         const opt = field.options.find(o => +o.v === +currentVal);
-        val.textContent = opt ? opt.l.replace(' ★','') : currentVal;
+        val.textContent = opt ? optionLabel(opt, false) : currentVal;
       }
       wrap.appendChild(val);
     }
@@ -312,7 +322,7 @@ function saveSettings() {
       if (!isNaN(val) && val >= 10 && val <= 600) {
         newSettings[field.id] = val;
       } else {
-        showError('home-error', `${field.label}: enter a value between 10 and 600 seconds.`);
+        showError('home-error', t('settings.timeRange', { label: t(field.label) }));
       }
     } else {
       newSettings[field.id] = el.value;
@@ -353,7 +363,7 @@ function selectAvatar(idx) {
   const previewEmoji = document.getElementById('avatar-preview-emoji');
   if (previewEmoji) {
     previewEmoji.textContent = av.emoji;
-    document.getElementById('avatar-preview-name').textContent = av.name;
+    document.getElementById('avatar-preview-name').textContent = avatarName(av);
   }
 }
 
@@ -396,7 +406,8 @@ function initAvatarPicker() {
     btn.type = 'button';
     btn.className = 'avatar-opt' + (i === App.myAvatar ? ' selected' : '');
     btn.textContent = av.emoji;
-    btn.title = av.name;
+    btn.title = avatarName(av);
+    btn.dataset.avatarIndex = i;
     btn.addEventListener('click', () => { selectAvatar(i); closeAvatarModal(); });
     grid.appendChild(btn);
   });
@@ -426,7 +437,9 @@ function initHome() {
     const activeCard = document.querySelector(`.game-card[data-game="${urlGame}"]`);
     if (activeCard) {
       activeCard.classList.add('selected', 'game-card-locked');
-      document.querySelector('.game-selector h2').textContent = 'Joining game';
+      const heading = document.querySelector('.game-selector h2');
+      heading.dataset.i18n = 'home.joiningGame';
+      heading.textContent = t('home.joiningGame');
     }
   }
 
@@ -464,7 +477,7 @@ function initHome() {
 
   document.getElementById('btn-create')?.addEventListener('click', () => {
     const name = document.getElementById('inp-name').value.trim();
-    if (!name) { showError('home-error', 'Please enter your name.'); return; }
+    if (!name) { showError('home-error', t('home.error.name')); return; }
     App.myName = name;
     showLoading(true);
     App.socket.emit('room:create', { gameType: App.selectedGame, playerName: name, avatar: App.myAvatar });
@@ -483,8 +496,8 @@ function initHome() {
 function doJoin() {
   const name = document.getElementById('inp-name').value.trim();
   const code = document.getElementById('inp-code').value.trim().toUpperCase();
-  if (!name) { showError('home-error', 'Please enter your name.'); return; }
-  if (!code) { showError('home-error', 'Please enter a room code.'); return; }
+  if (!name) { showError('home-error', t('home.error.name')); return; }
+  if (!code) { showError('home-error', t('home.error.code')); return; }
   App.myName = name;
   showLoading(true);
   App.socket.emit('room:join', { code, playerName: name, avatar: App.myAvatar });
@@ -506,32 +519,37 @@ function fallbackCopy(text, msg) {
   document.body.appendChild(el);
   el.focus(); el.select();
   try { document.execCommand('copy'); toast(msg); }
-  catch { toast('Copy failed — code: ' + text, 4000, 'error'); }
+  catch { toast(t('toast.copyFailed', { code: text }), 4000, 'error'); }
   el.remove();
 }
 
 // ═══════════════════ LOBBY ═══════════════════
 function initLobby() {
   document.getElementById('btn-copy').addEventListener('click', () => {
-    copyText(App.roomCode, 'Room code copied!');
+    copyText(App.roomCode, t('toast.codeCopied'));
   });
 
   document.getElementById('btn-share').addEventListener('click', () => {
     const url = `${window.location.origin}${window.location.pathname}?code=${App.roomCode}&game=${App.gameType}`;
-    copyText(url, 'Invite link copied!');
+    copyText(url, t('toast.linkCopied'));
   });
 
   document.getElementById('btn-leave').addEventListener('click', () => location.reload());
   document.getElementById('btn-start').addEventListener('click', () => App.socket.emit('game:start'));
 }
 
-function renderLobby({ players, code, gameType, hostId, minPlayers, settings, sessionStats }) {
+function renderLobby(data) {
+  const { players, code, gameType, hostId, minPlayers, settings, sessionStats } = data;
   App.roomCode = code;
   App.isHost = hostId === App.myId;
   App.currentSettings = settings || {};
+  App.lastLobby = data;   // kept so a language change can re-render without the server
 
-  const gameNames = { tictactoe: 'Tic Tac Toe', killerdoctor: 'Mongolpuri', scribble: 'Scribble', uno: 'UNO' };
-  document.getElementById('lobby-title').textContent = gameNames[gameType] || 'Lobby';
+  const gameKeys = {
+    tictactoe: 'game.tictactoe.name', killerdoctor: 'game.killerdoctor.name',
+    scribble: 'game.scribble.name', uno: 'game.uno.name', quiz: 'game.quiz.name',
+  };
+  document.getElementById('lobby-title').textContent = t(gameKeys[gameType] || 'lobby.title');
   document.getElementById('lobby-code').textContent = code;
 
   const grid = document.getElementById('lobby-players');
@@ -546,25 +564,25 @@ function renderLobby({ players, code, gameType, hostId, minPlayers, settings, se
     card.appendChild(av);
     const nameEl = document.createElement('div');
     nameEl.className = 'lobby-player-name';
-    nameEl.textContent = p.name + (p.id === App.myId ? ' (You)' : '');
+    nameEl.textContent = p.name + (p.id === App.myId ? ` ${t('common.youSuffix')}` : '');
     card.appendChild(nameEl);
-    if (p.isHost) { const cr = document.createElement('div'); cr.className = 'host-crown'; cr.textContent = '👑 Host'; card.appendChild(cr); }
+    if (p.isHost) { const cr = document.createElement('div'); cr.className = 'host-crown'; cr.textContent = t('lobby.host'); card.appendChild(cr); }
     if (App.isHost && p.id !== App.myId) {
       const controls = document.createElement('div');
       controls.className = 'host-controls';
       const transferBtn = document.createElement('button');
       transferBtn.className = 'btn-host-ctrl';
-      transferBtn.title = 'Make host';
+      transferBtn.title = t('lobby.makeHost');
       transferBtn.textContent = '👑';
       transferBtn.addEventListener('click', () => {
-        showConfirm(`Make ${p.name} the host?`, () => App.socket.emit('room:transfer_host', { playerId: p.id }), { confirmText: 'Make Host' });
+        showConfirm(t('lobby.confirmMakeHost', { name: p.name }), () => App.socket.emit('room:transfer_host', { playerId: p.id }), { confirmText: t('lobby.makeHost') });
       });
       const kickBtn = document.createElement('button');
       kickBtn.className = 'btn-host-ctrl btn-kick-ctrl';
-      kickBtn.title = 'Kick player';
+      kickBtn.title = t('common.kickPlayer');
       kickBtn.textContent = '🚫';
       kickBtn.addEventListener('click', () => {
-        showConfirm(`Kick ${p.name}?`, () => App.socket.emit('room:kick', { playerId: p.id }), { confirmText: 'Kick', danger: true });
+        showConfirm(t('common.confirmKick', { name: p.name }), () => App.socket.emit('room:kick', { playerId: p.id }), { confirmText: t('common.kick'), danger: true });
       });
       controls.appendChild(transferBtn);
       controls.appendChild(kickBtn);
@@ -575,18 +593,19 @@ function renderLobby({ players, code, gameType, hostId, minPlayers, settings, se
 
   const enough = players.length >= minPlayers;
   document.getElementById('lobby-status').textContent = enough
-    ? `${players.length} players ready — host can start!`
-    : `Waiting for players… (${players.length}/${minPlayers} minimum)`;
+    ? t('lobby.playersReady', { count: players.length })
+    : t('lobby.waitingPlayers', { count: players.length, min: minPlayers });
 
   const startBtn = document.getElementById('btn-start');
   startBtn.disabled = !enough || !App.isHost;
-  startBtn.textContent = App.isHost ? 'Start Game' : 'Waiting for host…';
+  startBtn.textContent = t(App.isHost ? 'lobby.startGame' : 'lobby.waitingHost');
 
   renderSettings(gameType, settings, App.isHost);
   renderSessionStats(sessionStats);
 }
 
 function renderSessionStats(stats) {
+  App.lastStats = stats;
   const el = document.getElementById('lobby-session-stats');
   if (!stats || !Object.keys(stats).length) { el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
@@ -599,7 +618,7 @@ function renderSessionStats(stats) {
     row.className = 'stats-row';
     row.innerHTML = `<span class="stats-rank">${medals[i] || (i + 1) + '.'}</span>` +
       `<span class="stats-name">${s.name}</span>` +
-      `<span class="stats-record">${s.wins}W / ${s.gamesPlayed}G</span>`;
+      `<span class="stats-record">${t('lobby.record', { wins: s.wins, games: s.gamesPlayed })}</span>`;
     body.appendChild(row);
   });
 }
@@ -617,8 +636,9 @@ App.socket.on('room:joined', ({ code, isHost, gameType }) => {
 
 App.socket.on('room:error', ({ msg }) => {
   showLoading(false);
-  showError('home-error', msg);
-  toast(msg, 5000, 'error');
+  const text = tmsg(msg);
+  showError('home-error', text);
+  toast(text, 5000, 'error');
 });
 
 App.socket.on('lobby:update', data => {
@@ -629,17 +649,17 @@ App.socket.on('lobby:update', data => {
 App.socket.on('lobby:settings', settings => {
   App.currentSettings = settings;
   renderSettings(App.gameType, settings, App.isHost);
-  if (!App.isHost) toast('Host updated game settings');
+  if (!App.isHost) toast(t('toast.settingsUpdated'));
 });
 
-App.socket.on('notification', msg => toast(msg));
+App.socket.on('notification', payload => toast(tmsg(payload)));
 App.socket.on('game:starting', () => showCountdown());
 App.socket.on('game:back_to_lobby', () => showView('lobby'));
 
 App.socket.on('room:kicked', () => {
   showView('home');
   showLoading(false);
-  toast('You were removed from the room.', 4000, 'error');
+  toast(t('toast.kicked'), 4000, 'error');
 });
 
 // Game start triggers
@@ -663,15 +683,30 @@ App.socket.on('kd:reconnect',    data  => {
 });
 
 // ═══════════════════ INIT ═══════════════════
+// Everything waits on the language files: the modules build their labels with
+// t() at render time, so the dictionary has to be in place before they run.
 document.addEventListener('DOMContentLoaded', () => {
-  initAvatarPicker();
-  initHome();
-  initLobby();
-  initRulesModal();
-  initSettings();
-  TicTacToe.init();
-  KillerDoctor.init();
-  Scribble.init();
-  UNO.init();
-  QUIZ.init();
+  I18n.init().then(() => {
+    initAvatarPicker();
+    initHome();
+    initLobby();
+    initRulesModal();
+    initSettings();
+    TicTacToe.init();
+    KillerDoctor.init();
+    Scribble.init();
+    UNO.init();
+    QUIZ.init();
+
+    // A language change re-renders in place — never a reload, which would drop
+    // the socket and with it the game in progress.
+    I18n.onChange(() => {
+      selectAvatar(App.myAvatar);
+      document.querySelectorAll('.avatar-opt').forEach(btn => {
+        const av = AVATARS[+btn.dataset.avatarIndex];
+        if (av) btn.title = avatarName(av);
+      });
+      if (App.lastLobby) renderLobby(App.lastLobby);
+    });
+  });
 });
