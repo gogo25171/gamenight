@@ -10,6 +10,72 @@ Puissance 4 🅱️ · Undercover 🅱️ · Pierre-Feuille-Ciseaux 🅱️.
 
 ---
 
+## 🗺 Priorités de développement
+
+Ce fichier a grossi : une quinzaine de chantiers, du réglage d'une heure à la
+plateforme de mini-jeux. Cette section est la porte d'entrée — **quoi faire
+ensuite, et pourquoi celui-là plutôt qu'un autre**. Le détail reste dans chaque
+section, rien n'est déplacé.
+
+Le classement suit deux questions, dans cet ordre :
+
+1. **Est-ce que ça protège ce qui existe déjà ?** Un jeu de plus sur des
+   fondations qui cassent, c'est un jeu de plus à réparer.
+2. **Est-ce que ça se voit un soir de partie ?** Ce projet sert à jouer entre
+   amis, pas à collectionner des lignes de code.
+
+### 🔴 P0 — à faire avant d'ajouter quoi que ce soit
+
+Le socle. Tant que ce n'est pas fait, chaque nouveauté augmente la dette.
+
+| Chantier | Pourquoi maintenant | Effort |
+|----------|---------------------|--------|
+| [Sortir les 3 jeux de bêta](#-jeux-à-ajouter) — soirées de test, équilibrage, retrait du badge | Trois jeux livrés mais jamais joués pour de vrai. Les tester en conditions réelles **avant** d'en écrire un quatrième | 2-3 soirées |
+| [Découper `server.js`](#-bugs--dette-technique) en `games/<id>.js` | 1 900 lignes. Ce n'est plus un blocage pour les tests, mais ça le redevient pour la relecture dès le prochain jeu | 1 jour |
+| [Réglage `nightTime` absent du lobby](#-bugs--dette-technique) | Bug déjà identifié, correction en dix minutes, et un test l'attrape maintenant | 10 min |
+
+### 🟠 P1 — le prochain vrai morceau
+
+Un seul à la fois. Mon ordre :
+
+| # | Chantier | Pourquoi | Effort |
+|---|----------|----------|--------|
+| 1 | [Bots](#-bots--compléter-une-table-ou-jouer-tout-seul) — infrastructure + morpion + Puissance 4 | Débloque deux usages que rien ne couvre : la table incomplète et le joueur seul. Et son évaluateur **sert deux fois** : le coach de la section suivante en dépend | 2-3 jours |
+| 2 | [Apprentissage des techniques](#-apprendre-les-techniques-de-chaque-jeu) — onglet « Techniques » | La partie HTML + i18n est indépendante des bots et peut se faire en parallèle. L'analyse d'après-partie, elle, attend l'évaluateur | 1 jour pour l'onglet |
+| 3 | [Bataille Navale](#-bataille-navale--plan-dimplémentation) | Le seul jeu de la liste qui apporte une mécanique neuve (la phase de placement) plutôt qu'une variante | 2 jours |
+| 4 | [Banque de questions locale pour le Quiz](#-bugs--dette-technique) | Supprime la **seule** dépendance internet du projet. Un LAN sans wifi, et le Quiz meurt | 0,5 jour |
+
+### 🟡 P2 — confort, à prendre quand l'envie vient
+
+| Chantier | Ce que ça apporte |
+|----------|-------------------|
+| [Tests plus fins](#-tests--arrêter-de-découvrir-les-régressions-en-soirée) | Mongolpuri de bout en bout, UNO au niveau du tour, scoring. La base est là ; ceci est du raffinement |
+| [Variantes de jeux](#-variantes-de-jeux--à-réfléchir) | Beaucoup de plaisir pour peu de code — souvent un seul réglage |
+| [Numéro de version par jeu](#-numéro-de-version-par-jeu) | Devient utile le jour où les retours des joueurs arrivent |
+| [Retours des joueurs](#-espace-de-commentaires--retours-des-joueurs) | Utile seulement s'il y a des joueurs autres que soi |
+| [Configuration `.env`](#-configuration-par-fichier-env) | Confort d'hébergement, invisible pour les joueurs |
+| [Documentation : captures et diagrammes](#-faire-évoluer-la-documentation) | Le manque le plus visible pour un nouvel arrivant |
+| [Plus de langues](#-traduction--i18n--par-joueur) | EN et FR couvrent déjà la table |
+
+### 🔵 P3 — pas maintenant
+
+| Chantier | Pourquoi attendre |
+|----------|-------------------|
+| [Plateforme de mini-jeux, marketplace](#-plateforme--mini-jeux-installables-marketplace-gros-jeux) | Exécuter du code tiers demande un bac à sable. C'est un projet en soi, et le problème de sécurité est à régler **avant** la première installation distante |
+| [Le Juste Prix](#-intégrer-le-juste-prix-) | L'option retenue est de juxtaposer, pas de fusionner. Une demi-heure de `docker-compose`, le jour où on en a envie |
+| Jeux « ambitieux » (Loup-Garou complet, Poker, Quiplash) | Chacun est un moteur entier. À rouvrir quand le socle P0 est propre |
+
+### ⏱️ Si tu n'as qu'une heure
+
+Dans l'ordre, chaque ligne se termine en une session :
+
+1. Corriger `nightTime` (absent du schéma de lobby) — et écrire le test qui l'aurait attrapé.
+2. Supprimer `test-tournament.js`, maintenant que [test/tournament.test.js](test/tournament.test.js) teste le vrai code.
+3. Ajouter « écrire les tests du jeu » à la [checklist d'ajout d'un jeu](#-checklist--ajouter-un-jeu).
+4. Une variante « morpion misère » — un réglage, une condition inversée, un test.
+
+---
+
 ## 🎮 Jeux à ajouter
 
 Classés par effort d'implémentation. « Réutilise » = infra déjà en place dans le projet.
@@ -548,40 +614,46 @@ ne veut d'un assistant qui souffle à l'oreille d'un adversaire.
 
 ## 🧪 Tests — arrêter de découvrir les régressions en soirée
 
-Aujourd'hui il existe **un seul** test : [test-tournament.js](test-tournament.js), un script
-autonome qui **recopie** `buildTournamentRounds` / `propagateTournamentWinners` depuis
-[server.js](server.js). Deux conséquences : la CI ne vérifie que la syntaxe (`node --check`),
-et le jour où quelqu'un modifie le bracket dans `server.js` sans toucher la copie, le test
-continue de passer en testant du code mort.
+### ✅ État d'avancement
 
-### 🎯 Le principe
+La base est en place : **97 tests**, ~4 s, zéro dépendance ajoutée.
 
-- [ ] **Un fichier de tests par domaine**, pas un fichier fourre-tout :
-      `tests/tournament.test.js`, `tests/uno.test.js`, `tests/killerdoctor.test.js`,
-      `tests/settings.test.js`, `tests/room.test.js`, `tests/i18n.test.js`
-- [ ] Chaque test **importe le vrai code** — plus jamais de copie. C'est le prérequis :
-      tant que tout est dans un `server.js` de 1 400 lignes sans `module.exports`,
-      rien n'est testable. Le découpage en `games/<id>/` de la section « Plateforme »
-      ci-dessus n'est pas qu'une question de propreté, c'est **ce qui rend les tests possibles**
-- [ ] Utiliser `node:test` + `node:assert` — **intégré à Node ≥ 18**, donc zéro dépendance
-      ajoutée et compatible avec la matrice `18 · 20 · 22` de la CI. Pas de Jest, pas de Vitest
-- [ ] `npm test` lance `node --test tests/` ; la CI le fait tourner sur les trois versions de Node
+| | Quoi |
+|--|------|
+| ✅ | `npm test` → `node --test`, avec `node:test` + `node:assert` (intégrés à Node ≥ 18, donc compatibles avec la matrice `18 · 20 · 22`). Pas de Jest, pas de Vitest |
+| ✅ | Un fichier par domaine dans [test/](test/) : `settings`, `tournament`, `tictactoe`, `connect4`, `rps`, `undercover`, `uno`, `secrets`, `lifecycle` |
+| ✅ | Les tests appellent **le vrai code** : `server.js` se termine par un `module.exports`, et son `server.listen` est derrière `if (require.main === module)` — un test peut donc `require()` le serveur sans ouvrir de port |
+| ✅ | `npm test` et `npm run i18n:check` branchés en CI **et** en hooks pre-commit |
+| ⏳ | Le découpage de `server.js` en `games/<id>/` reste souhaitable pour la lisibilité — mais il n'est plus un **prérequis** aux tests, le `module.exports` a levé le blocage |
+
+> 💡 Deux pièges appris en écrivant la suite, à connaître avant d'en ajouter :
+> les machines à phases se **pilotent** (on appelle `ucStartClues`, `rpsResolveRound`…)
+> au lieu d'attendre des timers de 30 s, et tout test qui démarre une partie doit
+> finir par `stopTimers(room)` sinon le runner ne rend jamais la main. Les rôles,
+> les mots et les mains étant tirés au hasard, on sélectionne un joueur **par son
+> rôle**, jamais par sa position — sinon le test passe quatre fois sur cinq.
 
 ### 🛡️ Ce qu'il faut couvrir en priorité
 
 Par ordre de « ça a déjà cassé ou ça cassera » :
 
-| Cible | Ce qu'on vérifie | Pourquoi |
-|-------|------------------|----------|
-| **Bracket de tournoi** | 3 à 8 joueurs : nombre de tours, exemptions (byes), propagation du gagnant | Le test existant, mais branché sur le vrai code |
-| **`validateSettings()`** | Une valeur hors liste est **jetée, pas ramenée dans les clous** ; le réglage garde sa valeur par défaut | C'est une règle de sécurité, pas une préférence — un client hostile envoie n'importe quoi |
-| **Cohérence `SETTINGS_SCHEMA` ↔ `validateSettings()`** | Chaque option proposée au lobby est acceptée par le serveur | Le piège documenté dans CLAUDE.md : l'hôte choisit une valeur que le serveur jette en silence |
-| **Règles UNO** | Cartes jouables, +2/+4 en chaîne, sens de jeu, joker qui change la couleur | La logique la plus dense du projet |
-| **Cycle Mongolpuri** | Le Médecin annule le Tueur, conditions de victoire, égalité au vote = aucune élimination | Beaucoup d'états, faciles à casser |
-| **Secrets** | `*Public()` ne contient **jamais** le rôle, le mot de Scribble ni la bonne réponse du Quiz | Le test le plus important : une fuite ici ruine la partie sans lever d'erreur |
-| **Cycle de vie d'un salon** | Code unique, hôte transféré au départ de l'hôte, salon vide supprimé, timers purgés | `clearTimers()` oublié = fuite mémoire silencieuse |
-| **i18n** | `npm run i18n:check` : aucune clé manquante, aucune clé orpheline | Déjà écrit — reste à le brancher en CI |
-| **Scoring** | Points au chrono (Scribble, Quiz), classement, égalités | Silencieusement faux, personne ne s'en aperçoit sur le moment |
+| | Cible | Ce qu'on vérifie | Pourquoi |
+|--|-------|------------------|----------|
+| ✅ | **Bracket de tournoi** | 2 à 16 joueurs : nombre de tours, exemptions, matchs fantômes, propagation, un seul champion | Partagé par le morpion et le P-F-C : une régression casse deux jeux |
+| ✅ | **`validateSettings()`** | Une valeur hors liste est **jetée, pas ramenée dans les clous** ; les chaînes des `<select>` sont bien converties | Règle de sécurité, pas préférence — un client hostile envoie n'importe quoi |
+| ✅ | **Cohérence `SETTINGS_SCHEMA` ↔ `validateSettings()`** | Chaque option du lobby est acceptée par le serveur, et chaque défaut du schéma est valide | Le piège documenté dans CLAUDE.md : l'hôte choisit une valeur que le serveur jette en silence |
+| ✅ | **Secrets** | Rôle et mot Undercover, coup P-F-C avant révélation, main UNO, rôle Mongolpuri, mot Scribble, réponse du Quiz — rien ne part dans une diffusion salon | **Le plus important.** Une fuite ici ruine la partie sans lever la moindre erreur |
+| ✅ | **Alignements** | Morpion 3×3/4×4/5×5 et Puissance 4 dans les 4 directions, plus le piège du **retour à la ligne** (deux cases voisines dans le tableau plat mais pas sur la grille) | Le bug typique d'une détection écrite à la main |
+| ✅ | **Coups illégaux** | Hors tour, hors grille, case occupée, colonne pleine, spectateur, coup après la fin | Un client peut émettre n'importe quel `game:action` |
+| ✅ | **Format de match** | Best-of qui s'arrête à la majorité, jeu libre qui ne s'arrête jamais, échange des symboles/couleurs, scores conservés | Le score qui repart à zéro entre deux manches |
+| ✅ | **Undercover** | Répartition des rôles de 4 à 12 joueurs sans parité au départ, indice tronqué/vide, égalité au vote, devinette de Mr White | Beaucoup d'états, faciles à casser |
+| ✅ | **Cartes UNO** | Deck de 108 cartes exactement, jouabilité couleur/valeur/joker, sens de jeu qui s'inverse et boucle | La logique la plus dense du projet |
+| ✅ | **Cycle de vie d'un salon** | Reconnexion qui rend l'état **privé** pour les 8 jeux, départ en cours de partie sans blocage, `clearTimers()`, tableau des scores de session | `clearTimers()` oublié = fuite mémoire silencieuse |
+| ✅ | **Câblage d'un jeu** | Chaque carte d'accueil a bien sa vue, son onglet de règles et son entrée serveur | Les oublis les plus fréquents de la checklist |
+| ✅ | **i18n** | `npm run i18n:check` : aucune clé manquante, aucune clé orpheline | Était déjà écrit — désormais branché en CI et en pre-commit |
+| ⏳ | **Cycle Mongolpuri** | Le Médecin annule le Tueur, conditions de victoire, égalité au vote = aucune élimination | Seuls les secrets sont couverts pour l'instant |
+| ⏳ | **UNO en partie** | +2/+4 en chaîne, « UNO ! » non dit, pioche épuisée qui recycle la défausse | Testé au niveau des cartes, pas encore au niveau du tour |
+| ⏳ | **Scoring** | Points au chrono (Scribble, Quiz), classement, égalités | Silencieusement faux, personne ne s'en aperçoit sur le moment |
 
 ### 🔌 Tests d'intégration socket
 
@@ -596,17 +668,49 @@ les départs en cours de partie.
 - [ ] ⚠️ Ces tests doivent **tuer le serveur et les timers** en fin de fichier, sinon
       `node --test` ne rend jamais la main
 
+### 🔬 Tests plus fins — quand on aura le temps
+
+La suite actuelle vise **large et vital** : les règles centrales, les coups illégaux
+et les fuites de secrets. Ce qui suit est du détail utile, pas urgent — à prendre
+une ligne à la fois, un jour de pluie.
+
+- [ ] **Mongolpuri de bout en bout** : nuit → résolution → jour → vote, avec le Médecin
+      qui sauve la cible du Tueur, plusieurs médecins, et la victoire à 2 survivants
+- [ ] **UNO au niveau du tour** : `unoPlayCard` avec +2/+4, joker qui impose la couleur,
+      « UNO ! » non annoncé, et surtout la **pioche épuisée qui recycle la défausse**
+      (le cas le plus rare et le plus cassant)
+- [ ] **Scribble** : points décroissants avec le chrono, indices révélés à 30 s et 55 s,
+      le dessinateur qui marque à chaque bonne réponse, la manche qui se termine quand
+      tout le monde a trouvé
+- [ ] **Quiz** : scoring à la vitesse, égalité, départ d'un joueur en pleine question.
+      La récupération des questions doit être **isolée du réseau** — sinon le test
+      dépend d'opentdb.com et devient instable
+- [ ] **Tournoi morpion complet** : enchaînement des matchs, match nul rejoué,
+      abandon en plein match, et l'écran de bracket entre deux matchs
+- [ ] **Propriétés plutôt qu'exemples** : jouer 10 000 parties de morpion aléatoires et
+      vérifier qu'aucune ne finit sans vainqueur ni match nul. C'est là qu'on trouve
+      les cas auxquels personne n'a pensé
+- [ ] **Cas limites de `validateSettings()`** : `NaN`, `Infinity`, `null`, tableaux,
+      objets imbriqués, chaînes très longues — ce qu'un client hostile envoie vraiment
+- [ ] Couverture via `node --test --experimental-test-coverage` — utile comme
+      indicateur, **jamais comme objectif chiffré**
+
 ### 🧷 Garde-fous anti-régression
 
-- [ ] Ajouter `npm test` à [ci.yml](.github/workflows/ci.yml), au même niveau que
-      `node --check` — un test qui ne tourne pas en CI ne sert à rien
+- [x] ~~Ajouter `npm test` à [ci.yml](.github/workflows/ci.yml)~~ — fait, plus un hook
+      pre-commit `unit-tests` : la suite tourne avant que le commit ne parte, pas
+      seulement après
+- [x] ~~Brancher `npm run i18n:check`~~ — fait, en CI et en pre-commit
 - [ ] Un test de non-régression pour **chaque bug corrigé** : le test échoue d'abord,
       la correction le fait passer. C'est ce qui empêche le bug de revenir
 - [ ] Ajouter « écrire les tests du jeu » à la checklist « ajouter un jeu »
-- [ ] Couverture via `node --test --experimental-test-coverage` — utile comme indicateur,
-      **pas comme objectif chiffré**
-- [ ] Supprimer [test-tournament.js](test-tournament.js) une fois `tests/tournament.test.js`
-      branché sur le vrai code — deux tests du même sujet, dont un faux, c'est pire qu'un seul
+- [ ] Supprimer [test-tournament.js](test-tournament.js) : il garde sa **propre copie**
+      de `buildTournamentRounds` / `propagateTournamentWinners`, alors que
+      [test/tournament.test.js](test/tournament.test.js) teste désormais les vraies.
+      Deux tests du même sujet, dont un qui peut passer sur du code mort, c'est pire
+      qu'un seul. À supprimer avec la mention dans [CONTRIBUTING.md](CONTRIBUTING.md)
+- [ ] Faire tourner la suite **en parallèle** si elle dépasse ~15 s ; à 4 s ce n'est
+      pas un sujet
 
 ---
 
@@ -729,7 +833,7 @@ capte un moment où tout le monde regarde son écran en même temps.
 
 ---
 
-## ⚙️ Configuration par fichier `.env`
+## ⚙ Configuration par fichier `.env`
 
 Aujourd'hui une seule variable est lue : `PORT` ([server.js](server.js#L1353)). Tout le
 reste est en dur — `gamenight.local`, l'URL de l'API du Quiz, l'adresse d'écoute.
