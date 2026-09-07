@@ -34,11 +34,21 @@ repos:
         files: \.js$
         exclude: ^node_modules/
 
-      - id: tournament-test
-        name: tournament bracket test
-        entry: node test-tournament.js
+      # The whole suite, not just the files that changed: the games share a
+      # dispatch table, so a change to one can break another.
+      - id: unit-tests
+        name: unit tests (node --test)
+        entry: node --test
         language: system
-        files: ^(test-tournament\.js|server\.js)$
+        files: \.(js|json|html)$
+        exclude: ^(node_modules|site)/
+        pass_filenames: false
+
+      - id: i18n-check
+        name: language files in sync
+        entry: node scripts/i18n-check.js
+        language: system
+        files: ^public/(js/.*\.js|index\.html|js/i18n/.*\.json)$
         pass_filenames: false
 
   # Validates the commit message against Conventional Commits

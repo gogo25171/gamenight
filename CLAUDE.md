@@ -20,20 +20,40 @@ card and in the lobby.
 npm install
 npm start                  # node server.js  → http://localhost:4000
 npm run dev                # nodemon, restarts on save
-node test-tournament.js    # the only test: tournament bracket logic, 3–8 players
+npm test                   # node --test — the suite in test/, ~4 s, no dependencies
+npm run i18n:check         # en.json / fr.json parity and unused-key report
 node --check <file.js>     # syntax check — CI runs this over every .js outside node_modules
 pre-commit run --all-files # full hook suite (pip install pre-commit commitizen; pre-commit install)
 docker compose up -d --build
 mkdocs build --strict      # docs; pip install -r requirements-docs.txt first
 ```
 
-There is no test runner and no linter/formatter for JS. `test-tournament.js` is a
-standalone script that duplicates the bracket functions from `server.js` — if you
-change `buildTournamentRounds` / `propagateTournamentWinners` in `server.js`, the
-copies in the test must be updated in step or the test silently tests dead code.
+Tests live in [test/](test/) and run on Node's built-in runner — no framework, no
+dependency, in keeping with the rest of the project. `npm test` discovers
+`test/*.test.js` (and the older `test-tournament.js`) from the repo root.
 
-Manual multiplayer testing is the norm: run the server and open several browser
-windows against the room code.
+They drive the **real** functions: `server.js` ends with a `module.exports` block,
+and its `server.listen` is behind `if (require.main === module)`, so a test can
+`require('../server.js')` without binding a port. Tests build a room by hand with
+the helpers in [test/helpers.js](test/helpers.js) and call the game functions
+directly.
+
+Two things to know before writing one:
+
+- **Phase machines are stepped, not awaited.** A clue round is 30 real seconds, so
+  tests call the phase functions (`ucStartClues`, `rpsResolveRound`, …) instead of
+  waiting on timers. Any test that starts a game must end with
+  `stopTimers(room)`, or the pending `setTimeout` keeps the runner alive.
+- **Roles, words and hands are dealt at random.** Pick the player the test needs
+  by role (`find(p => p.role === 'civilian')`), never by position, or the test
+  passes four runs out of five.
+
+`test-tournament.js` at the root predates this and still carries its own copy of
+the bracket functions; [test/tournament.test.js](test/tournament.test.js) covers
+the same ground against the real ones. See TODO.md before touching it.
+
+Manual multiplayer testing is still the norm for anything involving a browser:
+run the server and open several windows against the room code.
 
 ## Architecture
 
@@ -134,6 +154,9 @@ header by hand. Scopes that mean something here: `mongolpuri`, `uno`, `quiz`,
 
 `cz bump` bumps `package.json` + `CHANGELOG.md` and tags; `release.yml` refuses
 to publish when the tag and `package.json` disagree.
+
+`npm test` and `npm run i18n:check` also run as pre-commit hooks, so a commit
+that breaks them fails locally before CI ever sees it.
 
 CI (`ci.yml`) additionally enforces: the Dockerfile's Node major and
 `engines.node`'s minimum must both appear in the test matrix (`'18' '20' '22'`),

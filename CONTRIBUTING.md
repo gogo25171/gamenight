@@ -11,6 +11,7 @@ git clone https://github.com/gogo25171/gamenight.git
 cd gamenight
 npm install
 npm run dev        # nodemon, restarts on save
+npm test           # the unit test suite (node --test), a few seconds
 ```
 
 Open <http://localhost:4000>. To test multiplayer, open a second browser window
@@ -143,16 +144,18 @@ patch, a `feat` a minor, a breaking change a major. Pushing the tag triggers
 ## Pull requests
 
 1. Fork and branch off `main` — one topic per branch.
-2. Make sure `node --check` passes on every file you touched and
-   `node test-tournament.js` still succeeds.
+2. Make sure `npm test` passes and `node --check` is clean on every file you
+   touched. If you changed game logic, add a test for it in `test/`.
 3. Run `pre-commit run --all-files`.
 4. Update `README.md` and `docs/` if you changed behaviour, and bump the games
    count badge if you added a game.
 5. Open the PR and fill in the template.
 
 CI runs on every push and pull request: syntax checks across Node 18/20/22, the
-tournament test, an `npm audit`, a Docker image build, a docs build, and Trivy
-scans of both the repository and the container image.
+unit test suite, the language-file check, an `npm audit`, a Docker image build, a
+docs build, and Trivy scans of both the repository and the container image. The
+test suite and the language check also run as pre-commit hooks, so they fail on
+your machine before they fail in CI.
 
 ## Reporting bugs
 

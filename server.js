@@ -1922,15 +1922,53 @@ function ucPublic(gs) {
 const PORT = process.env.PORT || 4000;
 const MDNS_HOST = 'gamenight.local';
 
-server.listen(PORT, '0.0.0.0', () => {
-  const bonjour = new Bonjour();
-  bonjour.publish({ name: 'GameNight', type: 'http', port: Number(PORT), host: MDNS_HOST });
+// Only listen when started directly. `require('./server')` hands the tests the
+// real game functions without opening a port or publishing over mDNS.
+if (require.main === module) {
+  server.listen(PORT, '0.0.0.0', () => {
+    const bonjour = new Bonjour();
+    bonjour.publish({ name: 'GameNight', type: 'http', port: Number(PORT), host: MDNS_HOST });
 
-  console.log('\n🎮  GameNight is live!\n');
-  console.log(`  Local:    http://localhost:${PORT}`);
-  console.log(`  Network:  http://${MDNS_HOST}:${PORT}  ← share with friends!`);
-  console.log('\n  Open in any browser on the same WiFi / LAN.\n');
+    console.log('\n🎮  GameNight is live!\n');
+    console.log(`  Local:    http://localhost:${PORT}`);
+    console.log(`  Network:  http://${MDNS_HOST}:${PORT}  ← share with friends!`);
+    console.log('\n  Open in any browser on the same WiFi / LAN.\n');
 
-  process.on('SIGINT', () => bonjour.unpublishAll(() => process.exit()));
-  process.on('SIGTERM', () => bonjour.unpublishAll(() => process.exit()));
-});
+    process.on('SIGINT', () => bonjour.unpublishAll(() => process.exit()));
+    process.on('SIGTERM', () => bonjour.unpublishAll(() => process.exit()));
+  });
+}
+
+// ─────────────────────────── EXPORTS ───────────────────────────
+// Test surface only — nothing in public/ reads this, and server.js does not
+// use it either. Everything here is driven from test/ with a hand-built room.
+module.exports = {
+  // room plumbing
+  rooms, playerRooms, io, server,
+  defaultSettings, validateSettings, minPlayers, broadcastLobby,
+  addTimer, clearTimers, recordResult,
+  sendReconnectState, handleAction, onPlayerDisconnect,
+  // tournament bracket, shared by Tic Tac Toe and Rock Paper Scissors
+  nextPow2, buildTournamentRounds, propagateTournamentWinners,
+  // tic tac toe
+  TTT_WIN_LENGTH, startTTT, tttMove, tttNewGame, tttWin, tttPublic,
+  // connect four
+  C4_NEED, startC4, c4Drop, c4NewGame, c4Win, c4Public,
+  // rock paper scissors
+  RPS_MOVES, RPS_BEATS, startRPS, rpsAction, rpsAdvance, rpsStartMatch, rpsStartRound,
+  rpsResolveRound, rpsPublic,
+  // undercover
+  UC_WORD_PAIRS, startUC, ucAction, ucStartClues, ucNextSpeaker, ucSubmitClue,
+  ucStartVoting, ucResolveVote, ucStartWhiteGuess, ucWhiteGuess, ucCheckWin, endUC,
+  ucPublic, ucAlive,
+  // mongolpuri
+  startKD, kdAction, kdCheckWin, kdAlive, kdRole,
+  // uno
+  UNO_COLORS, buildUnoDeck, shuffleArr, unoCanPlay, unoNextIdx, unoDrawN, startUno,
+  unoPlayCard, unoPublic,
+  // scribble
+  WORDS, maskWord, randWords, startScribble, scribbleStartTurn, scribbleWordChosen,
+  scribblePlayers,
+  // quiz
+  quizPublic,
+};

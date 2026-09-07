@@ -40,8 +40,11 @@ jobs:
           find . -name '*.js' -not -path './node_modules/*' -print0 \
             | xargs -0 -n1 node --check
 
-      - name: Tournament bracket test
-        run: node test-tournament.js
+      - name: Unit tests
+        run: npm test
+
+      - name: Language files are in sync
+        run: npm run i18n:check
 
       - name: Boot the server and hit it
         run: |
