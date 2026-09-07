@@ -10,9 +10,13 @@ RUN npm ci --omit=dev && npm cache clean --force
 # ─────────────── runtime ───────────────
 FROM node:20-alpine
 
-# Pull patched Alpine packages. The base image lags behind openssl
-# security releases, and Trivy fails the build on fixable CVEs.
-RUN apk upgrade --no-cache
+# Pull patched Alpine packages (the base image lags behind openssl security
+# releases), then drop npm entirely: node_modules is copied from the deps
+# stage, so nothing at runtime needs it. Its bundled dependencies (tar,
+# cross-spawn, brace-expansion...) are otherwise the only remaining source of
+# HIGH findings in the image, and removing them beats suppressing them.
+RUN apk upgrade --no-cache && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 ENV NODE_ENV=production
 ENV PORT=4000
