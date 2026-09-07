@@ -1,0 +1,95 @@
+site_name: GameNight
+site_description: Self-hosted multiplayer party games for your living room. No internet. No accounts. Just fun.
+site_url: https://gogo25171.github.io/gamenight/
+repo_url: https://github.com/gogo25171/gamenight
+repo_name: gogo25171/gamenight
+edit_uri: edit/main/docs/
+copyright: MIT licensed — no cloud, no tracking, no nonsense.
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Follow system theme
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - Docker: getting-started/docker.md
+      - Network play: getting-started/network.md
+  - Games:
+      - Overview: games/index.md
+      - Mongolpuri: games/mongolpuri.md
+      - UNO: games/uno.md
+      - Quiz: games/quiz.md
+      - Tic Tac Toe: games/tictactoe.md
+      - Scribble: games/scribble.md
+  - Development:
+      - Architecture: development/architecture.md
+      - Adding a game: development/adding-a-game.md
+      - Contributing: development/contributing.md
+      - CI/CD: development/ci-cd.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/gogo25171/gamenight
+      name: GameNight on GitHub
+
+not_in_nav: |
+  CHANGELOG.md

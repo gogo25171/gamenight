@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Every supported Node version parses and runs the code ──
+  test:
+    name: Test on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18', '20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # Fails if package-lock.json has drifted from package.json
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax-check every JavaScript file
+        run: |
+          find . -name '*.js' -not -path './node_modules/*' -print0 \
+            | xargs -0 -n1 node --check
+
+      - name: Tournament bracket test
+        run: node test-tournament.js
+
+      - name: Boot the server and hit it
+        run: |
+          node server.js &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4000/ > /dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4000/ > /dev/null
+          curl -fsS http://127.0.0.1:4000/js/app.js > /dev/null
+          kill $SERVER_PID
+
+  # ── Version consistency across package.json, Dockerfile and this workflow ──
+  versions:
+    name: Version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Dockerfile base image is a Node version we test
+        run: |
+          DOCKER_NODE=$(grep -oP '(?<=^FROM node:)\d+' Dockerfile | head -1)
+          echo "Dockerfile builds on Node $DOCKER_NODE"
+          grep -q "'$DOCKER_NODE'" .github/workflows/ci.yml \
+            || { echo "::error::Node $DOCKER_NODE is not in the CI test matrix"; exit 1; }
+
+      - name: engines.node is declared and consistent
+        run: |
+          ENGINES=$(node -p "require('./package.json').engines?.node ?? ''")
+          [ -n "$ENGINES" ] || { echo "::error::package.json has no engines.node"; exit 1; }
+          echo "engines.node = $ENGINES"
+          MIN=$(echo "$ENGINES" | grep -oP '\d+' | head -1)
+          grep -q "'$MIN'" .github/workflows/ci.yml \
+            || { echo "::error::Minimum Node $MIN is not covered by the CI matrix"; exit 1; }
+
+      - name: package-lock.json is in sync
+        run: npm ci --dry-run
+
+  # ── Known vulnerabilities in production dependencies ──
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  # ── The image actually builds and serves ──
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: gamenight:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run the container and check it responds
+        run: |
+          docker run -d --name gamenight-ci -p 4000:4000 gamenight:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4000/ > /dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4000/ > /dev/null
+          docker logs gamenight-ci
+          docker rm -f gamenight-ci
+
+  # ── Formatting and hygiene hooks, same ones developers run locally ──
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pre-commit/action@v3.0.1

@@ -107,3 +107,6 @@ for (let n = 3; n <= 8; n++) {
 }
 
 console.log(`\n${allPassed ? '✅ All player counts passed.' : '❌ Some counts failed.'}\n`);
+
+// Non-zero exit so CI fails on a bracket regression.
+process.exit(allPassed ? 0 : 1);

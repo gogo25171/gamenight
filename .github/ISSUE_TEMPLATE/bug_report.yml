@@ -1,0 +1,71 @@
+name: Bug report
+description: Something in a game does not behave the way it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Multiplayer bugs are far easier to fix with the exact sequence of
+        actions that triggered them. Please be as specific as you can.
+
+  - type: dropdown
+    id: game
+    attributes:
+      label: Which game?
+      options:
+        - Mongolpuri
+        - UNO
+        - Quiz
+        - Tic Tac Toe
+        - Scribble
+        - Lobby / room joining
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: players
+    attributes:
+      label: How many players were in the room?
+      placeholder: "5"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Host creates a Scribble room with draw time 60 s
+        2. Three players join
+        3. The drawer refreshes the page mid-round
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server output and browser console
+      description: Anything printed in the terminal running the server, and any errors in the browser console (F12).
+      render: shell
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "Node 20.11 on Windows 11, Chrome 121 / iPhone Safari — or: Docker compose"

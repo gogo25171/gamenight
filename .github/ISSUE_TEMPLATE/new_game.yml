@@ -1,0 +1,47 @@
+name: New game proposal
+description: Suggest a game to add to GameNight
+labels: [enhancement, new-game]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a look at [TODO.md](../blob/main/TODO.md) first — the game may
+        already be on the list, ranked by how much work it needs.
+
+  - type: input
+    id: name
+    attributes:
+      label: Game name
+    validations:
+      required: true
+
+  - type: input
+    id: players
+    attributes:
+      label: Player count
+      placeholder: "4-12"
+    validations:
+      required: true
+
+  - type: textarea
+    id: rules
+    attributes:
+      label: How does it play?
+      description: A short summary of a full round, the way the README describes the existing games.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reuse
+    attributes:
+      label: What could it reuse?
+      description: |
+        Does it fit an existing pattern? Roles + discussion + vote like Mongolpuri,
+        a deck and hands like UNO, timed rounds like Scribble, a bracket like Tic Tac Toe?
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to implement this myself

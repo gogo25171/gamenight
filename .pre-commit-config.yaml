@@ -1,0 +1,56 @@
+# Install once:  pip install pre-commit && pre-commit install
+# Run manually:  pre-commit run --all-files
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.md$
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        # .bat and .ps1 must keep CRLF - see .gitattributes
+        exclude: \.(bat|ps1)$
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: check-executables-have-shebangs
+      - id: detect-private-key
+
+  # Catch syntax errors before they reach a running game night
+  - repo: local
+    hooks:
+      - id: node-check
+        name: node --check
+        entry: node --check
+        language: system
+        files: \.js$
+        exclude: ^node_modules/
+
+      - id: tournament-test
+        name: tournament bracket test
+        entry: node test-tournament.js
+        language: system
+        files: ^(test-tournament\.js|server\.js)$
+        pass_filenames: false
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1
+    hooks:
+      - id: hadolint-docker
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint
+        args: [--fix, --config, .markdownlint.yaml]

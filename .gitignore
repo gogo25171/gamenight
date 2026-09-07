@@ -1,2 +1,9 @@
 node_modules/
 .env
+
+# MkDocs build output
+site/
+
+# Python virtualenvs used for the docs / pre-commit toolchain
+.venv/
+__pycache__/

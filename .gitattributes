@@ -1,0 +1,17 @@
+# Normalise line endings: LF in the repository and in every working tree.
+# Without this, Windows checkouts get CRLF and the mixed-line-ending
+# pre-commit hook rewrites files on every checkout.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF or cmd.exe misreads them.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Never touch binaries.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

@@ -13,3 +13,14 @@ start.sh
 check-and-start.sh
 check-and-start.ps1
 test-tournament.js
+site
+.github
+docs
+mkdocs.yml
+requirements-docs.txt
+.pre-commit-config.yaml
+.markdownlint.yaml
+CHANGELOG.md
+CONTRIBUTING.md
+SECURITY.md
+CODE_OF_CONDUCT.md
