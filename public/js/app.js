@@ -68,6 +68,10 @@ const App = {
   myAvatar: 0,
 };
 
+// Games still finding their balance. The flag drives the BETA chip on the home
+// card and in the lobby — the game itself behaves like any other.
+const BETA_GAMES = ['connect4', 'undercover', 'rps'];
+
 // ═══════════════════ SETTINGS SCHEMA (client-side) ═══════════════════
 // Labels and option labels are i18n keys, resolved at render time so a language
 // change re-labels the lobby without touching the values the host picked.
@@ -89,6 +93,32 @@ const SETTINGS_SCHEMA = {
   tictactoe: [
     { id: 'bestOf', label: 'settings.matchFormat', default: 0,
       options: [{v:0,k:'settings.opt.freePlay',star:true},{v:3,k:'settings.opt.bestOf',p:{n:3}},{v:5,k:'settings.opt.bestOf',p:{n:5}},{v:7,k:'settings.opt.bestOf',p:{n:7}}] },
+    { id: 'boardSize', label: 'settings.boardSize', default: 3,
+      options: [{v:3,k:'settings.opt.grid3',star:true},{v:4,k:'settings.opt.grid4'},{v:5,k:'settings.opt.grid5'}] },
+  ],
+  connect4: [
+    { id: 'bestOf', label: 'settings.matchFormat', default: 0,
+      options: [{v:0,k:'settings.opt.freePlay',star:true},{v:3,k:'settings.opt.bestOf',p:{n:3}},{v:5,k:'settings.opt.bestOf',p:{n:5}},{v:7,k:'settings.opt.bestOf',p:{n:7}}] },
+    { id: 'cols', label: 'settings.columns', default: 7,
+      options: [{v:6,k:'settings.opt.cols',p:{count:6}},{v:7,k:'settings.opt.cols',p:{count:7},star:true},{v:8,k:'settings.opt.cols',p:{count:8}},{v:9,k:'settings.opt.cols',p:{count:9}}] },
+    { id: 'rows', label: 'settings.rows', default: 6,
+      options: [{v:5,k:'settings.opt.rows',p:{count:5}},{v:6,k:'settings.opt.rows',p:{count:6},star:true},{v:7,k:'settings.opt.rows',p:{count:7}}] },
+  ],
+  undercover: [
+    { id: 'undercoverCount', label: 'settings.undercovers', default: 1,
+      options: [{v:1,k:'settings.opt.undercovers',p:{count:1},star:true},{v:2,k:'settings.opt.undercovers',p:{count:2}}] },
+    { id: 'mrWhite', label: 'settings.mrWhite', default: 1,
+      options: [{v:1,k:'settings.opt.on',star:true},{v:0,k:'settings.opt.off'}] },
+    { id: 'clueTime', label: 'settings.clueTime', default: 30,
+      options: [{v:15,k:'settings.opt.sec',p:{n:15}},{v:30,k:'settings.opt.sec',p:{n:30},star:true},{v:45,k:'settings.opt.sec',p:{n:45}},{v:60,k:'settings.opt.sec',p:{n:60}}] },
+    { id: 'votingTime', label: 'settings.votingTime', default: 45, isTime: true,
+      options: [{v:30,k:'settings.opt.sec',p:{n:30}},{v:45,k:'settings.opt.sec',p:{n:45},star:true},{v:60,k:'settings.opt.sec',p:{n:60}},{v:90,k:'settings.opt.sec',p:{n:90}}] },
+  ],
+  rps: [
+    { id: 'bestOf', label: 'settings.matchFormat', default: 3,
+      options: [{v:1,k:'settings.opt.singleThrow'},{v:3,k:'settings.opt.bestOf',p:{n:3},star:true},{v:5,k:'settings.opt.bestOf',p:{n:5}},{v:7,k:'settings.opt.bestOf',p:{n:7}}] },
+    { id: 'roundTime', label: 'settings.throwTime', default: 12,
+      options: [{v:8,k:'settings.opt.sec',p:{n:8}},{v:12,k:'settings.opt.sec',p:{n:12},star:true},{v:20,k:'settings.opt.sec',p:{n:20}}] },
   ],
   uno: [],
   quiz: [
@@ -548,8 +578,10 @@ function renderLobby(data) {
   const gameKeys = {
     tictactoe: 'game.tictactoe.name', killerdoctor: 'game.killerdoctor.name',
     scribble: 'game.scribble.name', uno: 'game.uno.name', quiz: 'game.quiz.name',
+    connect4: 'game.connect4.name', undercover: 'game.undercover.name', rps: 'game.rps.name',
   };
   document.getElementById('lobby-title').textContent = t(gameKeys[gameType] || 'lobby.title');
+  document.getElementById('lobby-beta').classList.toggle('hidden', !BETA_GAMES.includes(gameType));
   document.getElementById('lobby-code').textContent = code;
 
   const grid = document.getElementById('lobby-players');
@@ -674,6 +706,12 @@ App.socket.on('uno:state',       data  => { showView('uno');         UNO.onState
 App.socket.on('uno:hand',        data  =>   UNO.onHand(data));
 App.socket.on('uno:choose_color',()    =>   UNO.onChooseColor());
 App.socket.on('uno:game_over',   data  =>   UNO.onGameOver(data));
+App.socket.on('c4:state',        data  => { showView('connect4');    Connect4.onState(data); });
+App.socket.on('c4:disc',         data  =>   Connect4.onDisc(data));
+App.socket.on('c4:player_left',  data  =>   Connect4.onPlayerLeft(data));
+App.socket.on('rps:state',       data  => { showView('rps');         RPS.onState(data); });
+App.socket.on('uc:word',         data  => { showView('undercover');  Undercover.onWord(data); });
+App.socket.on('uc:state',        data  => { showView('undercover');  Undercover.onState(data); });
 App.socket.on('quiz:state',      data  => { showView('quiz');        QUIZ.onState(data); });
 App.socket.on('quiz:answered',   data  =>   QUIZ.onAnswered(data));
 App.socket.on('kd:reconnect',    data  => {
@@ -697,6 +735,9 @@ document.addEventListener('DOMContentLoaded', () => {
     Scribble.init();
     UNO.init();
     QUIZ.init();
+    Connect4.init();
+    Undercover.init();
+    RPS.init();
 
     // A language change re-renders in place — never a reload, which would drop
     // the socket and with it the game in progress.

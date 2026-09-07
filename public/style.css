@@ -1422,3 +1422,143 @@ input[type="range"] { accent-color: var(--accent); width: 100%; cursor: pointer;
   .lang-switcher { top: 6px; inset-inline-end: 6px; }
   .lang-btn { width: 30px; height: 30px; font-size: 0.9rem; }
 }
+
+/* ═══════════════════ BETA FLAG ═══════════════════ */
+.badge-beta {
+  display: inline-block; vertical-align: middle;
+  background: rgba(249,115,22,.18); color: var(--orange);
+  border: 1px solid rgba(249,115,22,.45); border-radius: 20px;
+  font-size: 0.65rem; font-weight: 800; letter-spacing: .12em;
+  padding: 2px 8px; text-transform: uppercase;
+}
+.game-card { position: relative; }
+.card-beta { position: absolute; top: 8px; right: 8px; }
+
+/* ═══════════════════ CONNECT FOUR ═══════════════════ */
+.c4-container { max-width: 640px; }
+.ttt-symbol.c4-sym-r, .ttt-symbol.c4-sym-y { font-size: 1.8rem; }
+
+.c4-board {
+  display: grid; gap: 6px; padding: 10px; margin-bottom: 18px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.c4-cell {
+  aspect-ratio: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; transition: all .15s;
+}
+.c4-cell.playable { cursor: pointer; }
+.c4-cell.playable:hover:not(.filled) { border-color: var(--accent); background: rgba(124,58,237,.15); }
+.c4-cell .c4-disc { width: 78%; height: 78%; border-radius: 50%; transition: background .15s; }
+.c4-cell.r-disc .c4-disc { background: radial-gradient(circle at 35% 30%, #f87171, #dc2626); }
+.c4-cell.y-disc .c4-disc { background: radial-gradient(circle at 35% 30%, #fde047, #eab308); }
+.c4-cell.win-cell { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); animation: tttWinGlow 0.75s ease-in-out infinite; }
+.c4-cell.c4-drop .c4-disc { animation: c4Drop 0.32s cubic-bezier(0.34,1.4,0.64,1) both; }
+
+@keyframes c4Drop {
+  0%   { transform: translateY(-260%); opacity: .4; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ═══════════════════ ROCK PAPER SCISSORS ═══════════════════ */
+.rps-container { max-width: 720px; }
+.rps-arena { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.rps-round-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+.rps-duel { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
+.rps-side { flex: 1; max-width: 200px; text-align: center; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 10px; }
+.rps-middle { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.rps-player-name { font-weight: 700; font-size: 0.9rem; margin-top: 6px; }
+.rps-hand { font-size: 3rem; line-height: 1; filter: grayscale(1); opacity: .5; transition: all .2s; }
+.rps-hand.thrown { filter: none; opacity: 1; }
+.rps-reveal-pop { animation: tttCellPop 0.32s cubic-bezier(0.34,1.56,0.64,1) both; filter: none; opacity: 1; }
+.rps-timer { font-size: 1.6rem; font-weight: 800; font-family: monospace; color: var(--accent2); }
+.rps-timer.urgent { color: var(--red); }
+
+.rps-round-result { font-size: 1.05rem; font-weight: 800; text-align: center; color: var(--accent2); min-height: 26px; }
+.rps-moves { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.rps-move {
+  background: var(--card); border: 2px solid var(--border); border-radius: 12px;
+  padding: 14px 20px; color: var(--text); font-weight: 700; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .15s; min-width: 96px;
+}
+.rps-move:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.rps-move:disabled { opacity: .4; cursor: not-allowed; }
+.rps-move.picked { border-color: var(--accent); background: rgba(124,58,237,.2); opacity: 1; }
+.rps-move-emoji { font-size: 2rem; line-height: 1; }
+.rps-waiting { color: var(--muted); font-size: 0.9rem; text-align: center; }
+
+.rps-gameover { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 0; }
+.rps-winner-name { font-size: 1.6rem; font-weight: 900; color: var(--accent2); }
+
+/* ═══════════════════ UNDERCOVER ═══════════════════ */
+.uc-phase { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
+.uc-phase.active { display: flex; animation: kdPhaseIn 0.3s ease both; }
+
+.uc-word { font-size: 1.6rem; font-weight: 900; letter-spacing: .04em; margin: 6px 0; color: var(--accent2); word-break: break-word; }
+
+.uc-player-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; flex: 1; }
+.uc-player-row { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; }
+.uc-player-row.dead { opacity: .5; text-decoration: line-through; }
+.uc-player-row.speaking { border-color: var(--accent); background: rgba(124,58,237,.14); }
+.uc-player-emoji { font-size: 1.1rem; }
+.uc-player-name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uc-voted-tag { color: var(--green); font-weight: 800; }
+.uc-role-tag { font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; background: var(--surface); color: var(--muted); white-space: nowrap; }
+.uc-role-tag.role-undercover { color: var(--red); background: rgba(239,68,68,.15); }
+.uc-role-tag.role-mrwhite { color: var(--text); background: rgba(226,232,240,.12); }
+.uc-role-tag.role-civilian { color: var(--green); background: rgba(16,185,129,.14); }
+
+.uc-clue-list { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; overflow-y: auto; max-height: 160px; }
+.uc-clue-row { display: flex; gap: 6px; }
+.uc-clue-name { font-weight: 700; }
+.uc-clue-word { color: var(--text); }
+
+.uc-round-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.uc-clue-input-box { display: flex; gap: 8px; }
+.uc-clue-input-box input { flex: 1; }
+
+.uc-white-box { display: flex; gap: 8px; margin: 14px auto; max-width: 380px; width: 100%; }
+.uc-white-box input { flex: 1; }
+.uc-final-words { color: var(--muted); font-size: 0.9rem; margin: 6px 0 10px; }
+.uc-final-card { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+.uc-final-card.dead { opacity: .6; }
+.uc-final-card.role-undercover { border-color: var(--red); background: rgba(239,68,68,.08); }
+.uc-final-card.role-mrwhite { border-color: var(--muted); }
+.uc-final-card.role-civilian { border-color: var(--green); background: rgba(16,185,129,.07); }
+.uc-final-emoji { font-size: 1.8rem; margin-bottom: 4px; }
+.uc-final-name { font-weight: 700; font-size: 0.88rem; }
+.uc-final-role { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+.uc-reveal-icon { font-size: 2.5rem; margin-bottom: 4px; }
+.uc-reveal-role { font-size: 1.4rem; font-weight: 900; margin-bottom: 4px; }
+.uc-reveal-role.role-undercover { color: var(--red); }
+.uc-reveal-role.role-civilian { color: var(--green); }
+.uc-reveal-word { font-size: 0.85rem; color: var(--muted); }
+
+.vote-card {
+  background: var(--card); border: 2px solid var(--border); border-radius: 10px;
+  padding: 14px 12px; color: var(--text); font-weight: 600; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .15s;
+}
+.vote-card:hover:not(:disabled) { border-color: var(--red); background: rgba(239,68,68,.12); }
+.vote-card.selected { border-color: var(--red); background: rgba(239,68,68,.2); }
+.vote-card:disabled { opacity: .4; cursor: not-allowed; }
+.vote-emoji { font-size: 2rem; line-height: 1; }
+.vote-name { font-size: 0.9rem; }
+.vote-clue { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+.vote-detail-row { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; }
+
+.timer-display.urgent { color: var(--red); }
+
+/* Bigger grids need smaller glyphs to stay on one screen. */
+.ttt-board-lg .ttt-cell { font-size: 1.9rem; }
+
+@media (max-width: 640px) {
+  .rps-duel { gap: 10px; }
+  .rps-hand { font-size: 2.2rem; }
+  .rps-move { padding: 10px 14px; min-width: 78px; }
+  .rps-move-emoji { font-size: 1.6rem; }
+  .c4-board { gap: 3px; padding: 6px; }
+  .ttt-board-lg .ttt-cell { font-size: 1.3rem; }
+  .uc-word { font-size: 1.25rem; }
+}

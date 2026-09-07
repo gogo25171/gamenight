@@ -20,7 +20,10 @@ function defaultSettings(gameType) {
   switch (gameType) {
     case 'scribble':     return { drawTime: 45, rounds: 3, wordChoices: 3 };
     case 'killerdoctor': return { discussionTime: 45, votingTime: 45, nightTime: 45 };
-    case 'tictactoe':    return { bestOf: 0 };
+    case 'tictactoe':    return { bestOf: 0, boardSize: 3 };
+    case 'connect4':     return { bestOf: 0, cols: 7, rows: 6 };
+    case 'undercover':   return { undercoverCount: 1, mrWhite: 1, clueTime: 30, votingTime: 45 };
+    case 'rps':          return { bestOf: 3, roundTime: 12 };
     case 'uno':          return {};
     case 'quiz':         return { numQuestions: 15, timePerQuestion: 20 };
     default:             return {};
@@ -44,6 +47,22 @@ function validateSettings(incoming, gameType) {
       break;
     case 'tictactoe':
       if ([0,3,5,7].includes(n('bestOf')))      out.bestOf = n('bestOf');
+      if ([3,4,5].includes(n('boardSize')))     out.boardSize = n('boardSize');
+      break;
+    case 'connect4':
+      if ([0,3,5,7].includes(n('bestOf')))      out.bestOf = n('bestOf');
+      if ([6,7,8,9].includes(n('cols')))        out.cols = n('cols');
+      if ([5,6,7].includes(n('rows')))          out.rows = n('rows');
+      break;
+    case 'undercover':
+      if ([1,2].includes(n('undercoverCount'))) out.undercoverCount = n('undercoverCount');
+      if ([0,1].includes(n('mrWhite')))         out.mrWhite = n('mrWhite');
+      if ([15,30,45,60].includes(n('clueTime'))) out.clueTime = n('clueTime');
+      if (isValidTime('votingTime'))            out.votingTime = n('votingTime');
+      break;
+    case 'rps':
+      if ([1,3,5,7].includes(n('bestOf')))      out.bestOf = n('bestOf');
+      if ([8,12,20].includes(n('roundTime')))   out.roundTime = n('roundTime');
       break;
     case 'quiz':
       if ([10,15,20,25].includes(n('numQuestions')))  out.numQuestions    = n('numQuestions');
@@ -65,7 +84,7 @@ function uniqueCode() { let c; do { c = genCode(); } while (rooms.has(c)); retur
 function getRoom(sid) { const code = playerRooms.get(sid); return code ? rooms.get(code) : null; }
 function clearTimers(room) { (room.timers||[]).forEach(clearTimeout); room.timers = []; }
 function addTimer(room, fn, ms) { if (!room.timers) room.timers = []; const t = setTimeout(fn, ms); room.timers.push(t); return t; }
-function minPlayers(g) { return { tictactoe: 2, killerdoctor: 4, scribble: 3, uno: 2, quiz: 2 }[g] ?? 2; }
+function minPlayers(g) { return { tictactoe: 2, killerdoctor: 4, scribble: 3, uno: 2, quiz: 2, connect4: 2, undercover: 4, rps: 2 }[g] ?? 2; }
 
 function broadcastLobby(room) {
   io.to(room.code).emit('lobby:update', {
@@ -194,7 +213,7 @@ io.on('connection', socket => {
     }
     room.status = 'playing';
     io.to(room.code).emit('game:starting');
-    addTimer(room, () => ({ tictactoe: startTTT, killerdoctor: startKD, scribble: startScribble, uno: startUno, quiz: startQuiz })[room.gameType]?.(room), 3200);
+    addTimer(room, () => ({ tictactoe: startTTT, killerdoctor: startKD, scribble: startScribble, uno: startUno, quiz: startQuiz, connect4: startC4, undercover: startUC, rps: startRPS })[room.gameType]?.(room), 3200);
   });
 
   socket.on('game:action', data => {
@@ -261,6 +280,20 @@ function sendReconnectState(room, socket) {
       }
       break;
     }
+    case 'connect4': {
+      socket.emit('c4:state', c4Public(gs));
+      const disc = gs.players?.R?.id === socket.id ? 'R' : gs.players?.Y?.id === socket.id ? 'Y' : null;
+      socket.emit('c4:disc', { disc });
+      break;
+    }
+    case 'rps':
+      socket.emit('rps:state', rpsPublic(gs));
+      break;
+    case 'undercover':
+      // The word is the private half of this game — it goes to the one socket that owns it.
+      if (gs.playerData?.[socket.id]) socket.emit('uc:word', { word: gs.playerData[socket.id].word });
+      socket.emit('uc:state', ucPublic(gs));
+      break;
     case 'killerdoctor': {
       const pd = gs.playerData?.[socket.id];
       if (pd) socket.emit('kd:reconnect', { role: pd.role, phase: gs.phase, alive: pd.alive, avatar: pd.avatar ?? 0 });
@@ -291,7 +324,7 @@ function restartGame(room) {
   room.status = 'playing';
   room.gameState = null;
   io.to(room.code).emit('game:starting');
-  addTimer(room, () => ({ tictactoe: startTTT, killerdoctor: startKD, scribble: startScribble, uno: startUno, quiz: startQuiz })[room.gameType]?.(room), 3200);
+  addTimer(room, () => ({ tictactoe: startTTT, killerdoctor: startKD, scribble: startScribble, uno: startUno, quiz: startQuiz, connect4: startC4, undercover: startUC, rps: startRPS })[room.gameType]?.(room), 3200);
 }
 
 function handleAction(room, socket, data) {
@@ -301,6 +334,12 @@ function handleAction(room, socket, data) {
       if (data.action === 'move')     tttMove(room, socket, data.index);
       if (data.action === 'new_game' && room.gameState?.mode !== 'tournament') tttNewGame(room);
       break;
+    case 'connect4':
+      if (data.action === 'drop')     c4Drop(room, socket, data.col);
+      if (data.action === 'new_game') c4NewGame(room);
+      break;
+    case 'rps':          rpsAction(room, socket, data); break;
+    case 'undercover':   ucAction(room, socket, data); break;
     case 'killerdoctor': kdAction(room, socket, data); break;
     case 'scribble':     scribbleAction(room, socket, data); break;
     case 'uno':          unoAction(room, socket, data); break;
@@ -331,6 +370,12 @@ function handleChat(room, socket, player, message) {
       io.to(room.code).emit('chat:message', { playerId: socket.id, playerName: player.name, message });
     }
     return;
+  }
+
+  if (room.gameType === 'undercover' && gs) {
+    // Dead players stop talking, and nobody talks over the role reveal.
+    const pd = gs.playerData?.[socket.id];
+    if (!pd?.alive || gs.phase === 'role_reveal') return;
   }
 
   if (room.gameType === 'killerdoctor' && gs) {
@@ -369,6 +414,45 @@ function onPlayerDisconnect(room, sid, name) {
         io.to(room.code).emit('ttt:player_left', { name });
       }
       break;
+    case 'connect4':
+      if (gs.players?.R?.id === sid || gs.players?.Y?.id === sid) {
+        io.to(room.code).emit('c4:player_left', { name });
+      }
+      break;
+    case 'rps':
+      if (gs.match && (gs.match.p1 === sid || gs.match.p2 === sid)) {
+        const winnerId = gs.match.p1 === sid ? gs.match.p2 : gs.match.p1;
+        delete gs.allPlayers[sid];
+        if (gs.allPlayers[winnerId]) {
+          gs.rounds[gs.currentRound][gs.currentMatch].winner = winnerId;
+          io.to(room.code).emit('notification', { key: 'rps.leftAdvances', params: { name, winner: gs.allPlayers[winnerId].name } });
+          gs.match = null;
+          clearTimers(room);
+          io.to(room.code).emit('rps:state', rpsPublic(gs));
+          addTimer(room, () => rpsAdvance(room), 2000);
+        }
+      } else {
+        delete gs.allPlayers[sid];
+        io.to(room.code).emit('rps:state', rpsPublic(gs));
+      }
+      break;
+    case 'undercover': {
+      const pd = gs.playerData?.[sid];
+      if (!pd?.alive) break;
+      pd.alive = false;
+      const win = ucCheckWin(gs);
+      if (win) { clearTimers(room); endUC(room, win); break; }
+      if (ucAlive(gs).length < 3) { clearTimers(room); endUC(room, { winner: 'abandoned', reason: 'abandoned' }); break; }
+      // A departure must not leave the table waiting on a speaker who is gone.
+      if (gs.phase === 'clues' && gs.speakOrder?.[gs.speakerIndex] === sid) {
+        clearTimers(room); gs.speakerIndex++; ucNextSpeaker(room);
+      } else if (gs.phase === 'voting' && ucAlive(gs).every(p => p.vote)) {
+        ucResolveVote(room);
+      } else {
+        io.to(room.code).emit('uc:state', ucPublic(gs));
+      }
+      break;
+    }
     case 'scribble': {
       const idx = gs.drawerOrder.indexOf(sid); if (idx !== -1) gs.drawerOrder.splice(idx, 1);
       if (gs.drawerIndex >= gs.drawerOrder.length) gs.drawerIndex = 0;
@@ -432,6 +516,10 @@ function recordResult(room, winnerIds, allIds) {
 }
 
 // ─────────────────────── TIC TAC TOE ───────────────────────
+
+// Board size → symbols in a row needed to win. 5-in-a-row on a 5×5 grid is
+// almost always a draw, so the bigger board keeps the 4-in-a-row goal.
+const TTT_WIN_LENGTH = { 3: 3, 4: 4, 5: 4 };
 
 function nextPow2(n) { let p = 1; while (p < n) p <<= 1; return p; }
 
@@ -513,7 +601,7 @@ function startTournamentMatch(room, p1Id, p2Id) {
   const p1 = gs.allPlayers[p1Id], p2 = gs.allPlayers[p2Id];
   if (!p1 || !p2) { advanceTournament(room); return; }
   const [X, O] = Math.random() < 0.5 ? [p1, p2] : [p2, p1];
-  gs.board = Array(9).fill(null);
+  gs.board = Array(gs.size * gs.size).fill(null);
   gs.players = { X: { id: X.id, name: X.name }, O: { id: O.id, name: O.name } };
   gs.currentTurn = X.id;
   gs.winner = null; gs.winLine = null; gs.winnerSymbol = null;
@@ -536,13 +624,15 @@ function tttTournamentPublic(gs) {
 function startTTT(room) {
   const players = [...room.players.values()].sort(() => Math.random() - 0.5);
   const bestOf = room.settings?.bestOf ?? 0;
+  const size = TTT_WIN_LENGTH[room.settings?.boardSize] ? room.settings.boardSize : 3;
+  const winLength = TTT_WIN_LENGTH[size];
 
   if (players.length >= 3) {
     const allPlayers = {};
     players.forEach(p => { allPlayers[p.id] = { id: p.id, name: p.name }; });
     const rounds = buildTournamentRounds(players.map(p => p.id));
     room.gameState = {
-      type: 'tictactoe', mode: 'tournament',
+      type: 'tictactoe', mode: 'tournament', size, winLength,
       allPlayers, rounds, currentRound: 0, currentMatch: 0,
       board: null, players: null, currentTurn: null,
       winner: null, winLine: null, winnerSymbol: null, tournamentWinner: null,
@@ -552,8 +642,8 @@ function startTTT(room) {
   } else {
     const X = players[0], O = players[1];
     room.gameState = {
-      type: 'tictactoe', mode: 'classic',
-      board: Array(9).fill(null),
+      type: 'tictactoe', mode: 'classic', size, winLength,
+      board: Array(size * size).fill(null),
       players: { X: { id: X.id, name: X.name }, O: { id: O.id, name: O.name } },
       currentTurn: X.id,
       winner: null, winLine: null, winnerSymbol: null,
@@ -570,11 +660,11 @@ function startTTT(room) {
 function tttMove(room, socket, index) {
   const gs = room.gameState;
   if (!gs.board || gs.winner || (gs.mode !== 'tournament' && gs.matchWinner) || gs.currentTurn !== socket.id) return;
-  if (index < 0 || index > 8 || gs.board[index] !== null) return;
+  if (index < 0 || index >= gs.board.length || gs.board[index] !== null) return;
   const sym = gs.players.X.id === socket.id ? 'X' : gs.players.O.id === socket.id ? 'O' : null;
   if (!sym) return;
   gs.board[index] = sym;
-  const win = tttWin(gs.board);
+  const win = tttWin(gs.board, gs.size, gs.winLength);
   if (win) {
     gs.winner = socket.id; gs.winnerSymbol = sym; gs.winLine = win;
     if (gs.mode === 'tournament') {
@@ -610,7 +700,7 @@ function tttNewGame(room) {
   const gs = room.gameState;
   if (!gs || gs.mode === 'tournament' || gs.matchWinner) return;
   const tmp = gs.players.X; gs.players.X = gs.players.O; gs.players.O = tmp;
-  gs.board = Array(9).fill(null);
+  gs.board = Array(gs.size * gs.size).fill(null);
   gs.currentTurn = gs.players.X.id;
   gs.winner = null; gs.winLine = null; gs.winnerSymbol = null;
   gs.gameCount++;
@@ -619,15 +709,31 @@ function tttNewGame(room) {
   io.to(gs.players.O.id).emit('ttt:symbol', { symbol: 'O' });
 }
 
-function tttWin(board) {
-  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-  for (const [a,b,c] of lines) if (board[a] && board[a] === board[b] && board[a] === board[c]) return [a,b,c];
+// Scans right / down / both diagonals from every filled cell — one routine for
+// every board size instead of a hard-coded list of eight lines.
+function tttWin(board, size = 3, need = 3) {
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const v = board[r * size + c];
+      if (!v) continue;
+      for (const [dr, dc] of dirs) {
+        const line = [r * size + c];
+        for (let k = 1; k < need; k++) {
+          const nr = r + dr * k, nc = c + dc * k;
+          if (nr < 0 || nr >= size || nc < 0 || nc >= size || board[nr * size + nc] !== v) break;
+          line.push(nr * size + nc);
+        }
+        if (line.length === need) return line;
+      }
+    }
+  }
   return null;
 }
 
 function tttPublic(gs) {
   return {
-    mode: gs.mode || 'classic',
+    mode: gs.mode || 'classic', size: gs.size || 3, winLength: gs.winLength || 3,
     board: gs.board, currentTurn: gs.currentTurn, players: gs.players,
     winner: gs.winner, winLine: gs.winLine, winnerSymbol: gs.winnerSymbol,
     scores: gs.scores || {}, gameCount: gs.gameCount || 1,
@@ -1346,6 +1452,469 @@ function endQuiz(room) {
   const players = [...room.players.values()];
   recordResult(room, [players.sort((a, b) => (gs.scores[b.id] || 0) - (gs.scores[a.id] || 0))[0]?.id], players.map(p => p.id));
   io.to(room.code).emit('quiz:state', quizPublic(gs, room));
+}
+
+// ─────────────────────── CONNECT FOUR ───────────────────────
+
+const C4_NEED = 4;
+
+function startC4(room) {
+  const players = [...room.players.values()].sort(() => Math.random() - 0.5);
+  const cols = room.settings?.cols ?? 7;
+  const rows = room.settings?.rows ?? 6;
+  const R = players[0], Y = players[1];
+  room.gameState = {
+    type: 'connect4', cols, rows,
+    board: Array(cols * rows).fill(null),
+    players: { R: { id: R.id, name: R.name }, Y: { id: Y.id, name: Y.name } },
+    currentTurn: R.id,
+    winner: null, winLine: null, winnerDisc: null, lastMove: null,
+    scores: { [R.id]: 0, [Y.id]: 0 },
+    gameCount: 1, bestOf: room.settings?.bestOf ?? 0, matchWinner: null,
+  };
+  io.to(room.code).emit('c4:state', c4Public(room.gameState));
+  io.to(R.id).emit('c4:disc', { disc: 'R' });
+  io.to(Y.id).emit('c4:disc', { disc: 'Y' });
+  players.slice(2).forEach(p => io.to(p.id).emit('c4:disc', { disc: null }));
+}
+
+function c4Drop(room, socket, col) {
+  const gs = room.gameState;
+  if (!gs.board || gs.winner || gs.matchWinner || gs.currentTurn !== socket.id) return;
+  if (!Number.isInteger(col) || col < 0 || col >= gs.cols) return;
+  const disc = gs.players.R.id === socket.id ? 'R' : gs.players.Y.id === socket.id ? 'Y' : null;
+  if (!disc) return;
+  // Gravity: the disc settles on the lowest free cell of the column.
+  let row = -1;
+  for (let r = gs.rows - 1; r >= 0; r--) if (gs.board[r * gs.cols + col] === null) { row = r; break; }
+  if (row === -1) return;
+  const idx = row * gs.cols + col;
+  gs.board[idx] = disc;
+  gs.lastMove = idx;
+
+  const win = c4Win(gs.board, gs.cols, gs.rows, C4_NEED);
+  if (win) {
+    gs.winner = socket.id; gs.winnerDisc = disc; gs.winLine = win;
+    gs.scores[socket.id] = (gs.scores[socket.id] || 0) + 1;
+    if (gs.bestOf > 0 && gs.scores[socket.id] >= Math.ceil(gs.bestOf / 2)) {
+      gs.matchWinner = socket.id;
+      recordResult(room, [socket.id]);
+    }
+  } else if (gs.board.every(Boolean)) {
+    gs.winner = 'draw';
+  } else {
+    gs.currentTurn = gs.currentTurn === gs.players.R.id ? gs.players.Y.id : gs.players.R.id;
+  }
+  io.to(room.code).emit('c4:state', c4Public(gs));
+}
+
+function c4NewGame(room) {
+  const gs = room.gameState;
+  if (!gs || gs.matchWinner) return;
+  // Colours swap so the first-move advantage does not stick to one seat.
+  const tmp = gs.players.R; gs.players.R = gs.players.Y; gs.players.Y = tmp;
+  gs.board = Array(gs.cols * gs.rows).fill(null);
+  gs.currentTurn = gs.players.R.id;
+  gs.winner = null; gs.winLine = null; gs.winnerDisc = null; gs.lastMove = null;
+  gs.gameCount++;
+  io.to(room.code).emit('c4:state', c4Public(gs));
+  io.to(gs.players.R.id).emit('c4:disc', { disc: 'R' });
+  io.to(gs.players.Y.id).emit('c4:disc', { disc: 'Y' });
+}
+
+function c4Win(board, cols, rows, need) {
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const v = board[r * cols + c];
+      if (!v) continue;
+      for (const [dr, dc] of dirs) {
+        const line = [r * cols + c];
+        for (let k = 1; k < need; k++) {
+          const nr = r + dr * k, nc = c + dc * k;
+          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols || board[nr * cols + nc] !== v) break;
+          line.push(nr * cols + nc);
+        }
+        if (line.length === need) return line;
+      }
+    }
+  }
+  return null;
+}
+
+function c4Public(gs) {
+  return {
+    cols: gs.cols, rows: gs.rows, board: gs.board,
+    currentTurn: gs.currentTurn, players: gs.players,
+    winner: gs.winner, winLine: gs.winLine, winnerDisc: gs.winnerDisc, lastMove: gs.lastMove,
+    scores: gs.scores, gameCount: gs.gameCount, bestOf: gs.bestOf, matchWinner: gs.matchWinner,
+  };
+}
+
+// ─────────────────── ROCK PAPER SCISSORS ───────────────────
+
+const RPS_MOVES = ['rock', 'paper', 'scissors'];
+const RPS_BEATS = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+const RPS_REVEAL_MS = 2800;
+
+function startRPS(room) {
+  const players = [...room.players.values()].sort(() => Math.random() - 0.5);
+  const allPlayers = {};
+  players.forEach(p => { allPlayers[p.id] = { id: p.id, name: p.name, avatar: p.avatar ?? 0 }; });
+  room.gameState = {
+    type: 'rps', allPlayers,
+    rounds: buildTournamentRounds(players.map(p => p.id)),
+    currentRound: 0, currentMatch: 0,
+    bestOf: room.settings?.bestOf ?? 3,
+    roundTime: room.settings?.roundTime ?? 12,
+    match: null, tournamentWinner: null,
+  };
+  io.to(room.code).emit('rps:state', rpsPublic(room.gameState));
+  addTimer(room, () => rpsAdvance(room), 2000);
+}
+
+function rpsAdvance(room) {
+  const gs = room.gameState;
+  if (!gs) return;
+  propagateTournamentWinners(gs);
+  const final = gs.rounds[gs.rounds.length - 1][0];
+  if (final.winner) {
+    gs.tournamentWinner = final.winner;
+    gs.match = null;
+    room.status = 'ended';
+    recordResult(room, [gs.tournamentWinner], Object.keys(gs.allPlayers));
+    io.to(room.code).emit('rps:state', rpsPublic(gs));
+    return;
+  }
+  for (let r = 0; r < gs.rounds.length; r++) {
+    for (let m = 0; m < gs.rounds[r].length; m++) {
+      const match = gs.rounds[r][m];
+      if (!match.winner && match.p1 && match.p2) {
+        gs.currentRound = r; gs.currentMatch = m;
+        rpsStartMatch(room, match.p1, match.p2);
+        return;
+      }
+    }
+  }
+}
+
+function rpsStartMatch(room, p1, p2) {
+  const gs = room.gameState;
+  if (!gs.allPlayers[p1] || !gs.allPlayers[p2]) { rpsAdvance(room); return; }
+  gs.match = { p1, p2, scores: { [p1]: 0, [p2]: 0 }, roundNo: 1, matchWinner: null };
+  rpsStartRound(room);
+}
+
+function rpsStartRound(room) {
+  const gs = room.gameState, m = gs.match;
+  m.phase = 'picking';
+  m.picks = {};
+  m.result = null;
+  m.deadline = Date.now() + gs.roundTime * 1000;
+  io.to(room.code).emit('rps:state', rpsPublic(gs));
+  addTimer(room, () => { if (room.gameState?.match?.phase === 'picking') rpsResolveRound(room); }, gs.roundTime * 1000);
+}
+
+function rpsResolveRound(room) {
+  const gs = room.gameState, m = gs.match;
+  if (!m || m.phase !== 'picking') return;
+  clearTimers(room);
+  // A missing throw is filled in at random — a distracted player never stalls the bracket.
+  [m.p1, m.p2].forEach(id => { if (!m.picks[id]) m.picks[id] = RPS_MOVES[Math.floor(Math.random() * RPS_MOVES.length)]; });
+  const a = m.picks[m.p1], b = m.picks[m.p2];
+  const roundWinner = a === b ? null : (RPS_BEATS[a] === b ? m.p1 : m.p2);
+  if (roundWinner) m.scores[roundWinner]++;
+  m.phase = 'reveal';
+  m.result = { winner: roundWinner, picks: { ...m.picks } };
+  const needed = Math.ceil(gs.bestOf / 2);
+  m.matchWinner = [m.p1, m.p2].find(id => m.scores[id] >= needed) || null;
+  io.to(room.code).emit('rps:state', rpsPublic(gs));
+
+  if (m.matchWinner) {
+    gs.rounds[gs.currentRound][gs.currentMatch].winner = m.matchWinner;
+    addTimer(room, () => rpsAdvance(room), RPS_REVEAL_MS + 1400);
+  } else {
+    m.roundNo++;
+    addTimer(room, () => rpsStartRound(room), RPS_REVEAL_MS);
+  }
+}
+
+function rpsAction(room, socket, data) {
+  const gs = room.gameState, m = gs?.match;
+  if (data.action !== 'throw' || !m || m.phase !== 'picking') return;
+  if (socket.id !== m.p1 && socket.id !== m.p2) return;
+  if (m.picks[socket.id] || !RPS_MOVES.includes(data.pick)) return;
+  m.picks[socket.id] = data.pick;
+  socket.emit('rps:confirmed', { pick: data.pick });
+  io.to(room.code).emit('rps:state', rpsPublic(gs));
+  if (m.picks[m.p1] && m.picks[m.p2]) { clearTimers(room); addTimer(room, () => rpsResolveRound(room), 500); }
+}
+
+function rpsPublic(gs) {
+  const m = gs.match;
+  return {
+    rounds: gs.rounds, allPlayers: gs.allPlayers,
+    currentRound: gs.currentRound, currentMatch: gs.currentMatch,
+    tournamentWinner: gs.tournamentWinner,
+    bestOf: gs.bestOf, roundTime: gs.roundTime,
+    match: m ? {
+      p1: m.p1, p2: m.p2, scores: m.scores, roundNo: m.roundNo, phase: m.phase,
+      // While the round is live only the *fact* of a throw travels; the throw
+      // itself stays on the server until both players have committed.
+      thrown: { [m.p1]: !!m.picks[m.p1], [m.p2]: !!m.picks[m.p2] },
+      result: m.phase === 'reveal' ? m.result : null,
+      matchWinner: m.matchWinner || null,
+      deadline: m.phase === 'picking' ? m.deadline : null,
+    } : null,
+  };
+}
+
+// ─────────────────────── UNDERCOVER ───────────────────────
+
+// Civilian word first, undercover word second — close enough to be mistaken for
+// one another, far enough apart that a careless clue gives the impostor away.
+const UC_WORD_PAIRS = [
+  ['Coffee','Tea'], ['Cat','Dog'], ['Pizza','Burger'], ['Beach','Desert'],
+  ['Guitar','Violin'], ['Winter','Autumn'], ['Bicycle','Motorbike'], ['Doctor','Nurse'],
+  ['Movie','Series'], ['Lemon','Orange'], ['River','Lake'], ['Pencil','Pen'],
+  ['Butter','Cheese'], ['Sofa','Bed'], ['Train','Bus'], ['Castle','Palace'],
+  ['Painting','Photograph'], ['Snow','Rain'], ['Wolf','Fox'], ['Chess','Checkers'],
+  ['Piano','Harp'], ['Soup','Stew'], ['Mountain','Hill'], ['Sword','Axe'],
+  ['Wine','Beer'], ['Teacher','Coach'], ['Balloon','Kite'], ['Mirror','Window'],
+  ['Candle','Lamp'], ['Honey','Syrup'], ['Boat','Ship'], ['Jacket','Sweater'],
+  ['Library','Bookshop'], ['Salad','Sandwich'], ['Clock','Watch'], ['Island','Peninsula'],
+  ['Magician','Clown'], ['Rocket','Airplane'], ['Ghost','Zombie'], ['Chocolate','Caramel'],
+];
+
+const UC_WHITE_GUESS_MS = 25000;
+
+const ucAlive    = gs => Object.values(gs.playerData).filter(p => p.alive);
+const ucAliveIds = gs => gs.order.filter(id => gs.playerData[id]?.alive);
+const ucPub      = p  => ({ id: p.id, name: p.name, avatar: p.avatar ?? 0 });
+
+function startUC(room) {
+  const players = [...room.players.values()].sort(() => Math.random() - 0.5);
+  const pair = UC_WORD_PAIRS[Math.floor(Math.random() * UC_WORD_PAIRS.length)];
+  const [civWord, ucWord] = Math.random() < 0.5 ? pair : [pair[1], pair[0]];
+
+  // The impostor side must never start at parity, or the game is over on turn one.
+  const maxImpostors = Math.max(1, Math.floor((players.length - 1) / 2));
+  const withWhite = (room.settings?.mrWhite ?? 1) === 1 && players.length >= 5;
+  const ucCount = Math.max(1, Math.min(room.settings?.undercoverCount ?? 1, maxImpostors - (withWhite ? 1 : 0)));
+
+  const roles = [];
+  for (let i = 0; i < ucCount; i++) roles.push('undercover');
+  if (withWhite) roles.push('mrwhite');
+  while (roles.length < players.length) roles.push('civilian');
+  roles.sort(() => Math.random() - 0.5);
+
+  const playerData = {};
+  const order = [];
+  players.forEach((p, i) => {
+    const role = roles[i];
+    playerData[p.id] = {
+      id: p.id, name: p.name, avatar: p.avatar ?? 0, role,
+      word: role === 'civilian' ? civWord : role === 'undercover' ? ucWord : null,
+      alive: true, clue: null, vote: null,
+    };
+    order.push(p.id);
+  });
+
+  room.gameState = {
+    type: 'undercover', phase: 'role_reveal', playerData, order,
+    civilianWord: civWord, undercoverWord: ucWord,
+    round: 1, speakerIndex: 0, speakOrder: [], clues: [], history: [],
+    deadline: null, lastVote: null, whiteGuess: null, whiteId: null, result: null,
+  };
+  // The word is the whole secret: it goes to its owner alone, never to the room.
+  players.forEach(p => io.to(p.id).emit('uc:word', { word: playerData[p.id].word }));
+  io.to(room.code).emit('uc:state', ucPublic(room.gameState));
+  addTimer(room, () => ucStartClues(room), 7000);
+}
+
+function ucStartClues(room) {
+  const gs = room.gameState;
+  if (!gs) return;
+  gs.phase = 'clues';
+  gs.clues = [];
+  gs.lastVote = null;
+  gs.whiteGuess = null;
+  gs.whiteId = null;
+  Object.values(gs.playerData).forEach(p => { p.clue = null; p.vote = null; });
+  // The opening speaker rotates, so nobody has to give the blind first clue twice.
+  const alive = ucAliveIds(gs);
+  const shift = alive.length ? (gs.round - 1) % alive.length : 0;
+  gs.speakOrder = alive.slice(shift).concat(alive.slice(0, shift));
+  gs.speakerIndex = 0;
+  ucNextSpeaker(room);
+}
+
+function ucNextSpeaker(room) {
+  const gs = room.gameState;
+  while (gs.speakerIndex < gs.speakOrder.length && !gs.playerData[gs.speakOrder[gs.speakerIndex]]?.alive) gs.speakerIndex++;
+  if (gs.speakerIndex >= gs.speakOrder.length) { ucStartVoting(room); return; }
+  const dur = room.settings?.clueTime ?? 30;
+  gs.deadline = Date.now() + dur * 1000;
+  io.to(room.code).emit('uc:state', ucPublic(gs));
+  addTimer(room, () => {
+    if (room.gameState?.phase !== 'clues') return;
+    ucSubmitClue(room, gs.speakOrder[gs.speakerIndex], '');
+  }, dur * 1000);
+}
+
+function ucSubmitClue(room, playerId, word) {
+  const gs = room.gameState;
+  if (!gs || gs.phase !== 'clues') return;
+  if (gs.speakOrder[gs.speakerIndex] !== playerId) return;
+  clearTimers(room);
+  const clean = String(word || '').trim().replace(/\s+/g, ' ').slice(0, 24) || '—';
+  gs.playerData[playerId].clue = clean;
+  gs.clues.push({ playerId, name: gs.playerData[playerId].name, word: clean, round: gs.round });
+  gs.speakerIndex++;
+  ucNextSpeaker(room);
+}
+
+function ucStartVoting(room) {
+  const gs = room.gameState;
+  gs.phase = 'voting';
+  Object.values(gs.playerData).forEach(p => { p.vote = null; });
+  const dur = room.settings?.votingTime ?? 45;
+  gs.deadline = Date.now() + dur * 1000;
+  io.to(room.code).emit('uc:state', ucPublic(gs));
+  addTimer(room, () => { if (room.gameState?.phase === 'voting') ucResolveVote(room); }, dur * 1000);
+}
+
+function ucResolveVote(room) {
+  const gs = room.gameState;
+  clearTimers(room);
+  const tally = {};
+  ucAlive(gs).forEach(p => { if (p.vote) tally[p.vote] = (tally[p.vote] || 0) + 1; });
+  let max = 0, top = null, tied = false;
+  Object.entries(tally).forEach(([pid, cnt]) => {
+    if (cnt > max) { max = cnt; top = pid; tied = false; }
+    else if (cnt === max) tied = true;
+  });
+  const victim = (!tied && top && max > 0) ? gs.playerData[top] : null;
+  if (victim) {
+    victim.alive = false;
+    gs.history.push({ name: victim.name, role: victim.role, round: gs.round });
+  }
+  gs.phase = 'vote_result';
+  gs.lastVote = {
+    tied: !victim,
+    eliminated: victim ? { ...ucPub(victim), role: victim.role, word: victim.word } : null,
+    tally: Object.entries(tally).map(([pid, votes]) => ({ ...ucPub(gs.playerData[pid]), votes })),
+  };
+  io.to(room.code).emit('uc:state', ucPublic(gs));
+
+  // Mr White gets one shot at naming the civilian word on the way out.
+  if (victim?.role === 'mrwhite') { addTimer(room, () => ucStartWhiteGuess(room, victim.id), 4000); return; }
+
+  const win = ucCheckWin(gs);
+  if (win) { addTimer(room, () => endUC(room, win), 4000); return; }
+  gs.round++;
+  addTimer(room, () => ucStartClues(room), 4500);
+}
+
+function ucStartWhiteGuess(room, whiteId) {
+  const gs = room.gameState;
+  gs.phase = 'white_guess';
+  gs.whiteId = whiteId;
+  gs.whiteGuess = null;
+  gs.deadline = Date.now() + UC_WHITE_GUESS_MS;
+  io.to(room.code).emit('uc:state', ucPublic(gs));
+  addTimer(room, () => { if (room.gameState?.phase === 'white_guess') ucWhiteGuess(room, whiteId, ''); }, UC_WHITE_GUESS_MS);
+}
+
+function ucWhiteGuess(room, whiteId, guess) {
+  const gs = room.gameState;
+  if (!gs || gs.phase !== 'white_guess' || gs.whiteId !== whiteId) return;
+  clearTimers(room);
+  const clean = String(guess || '').trim().slice(0, 40);
+  const correct = clean.toLowerCase() === gs.civilianWord.toLowerCase();
+  gs.whiteGuess = { guess: clean, correct };
+  if (correct) { endUC(room, { winner: 'mrwhite', reason: 'guessed' }); return; }
+  io.to(room.code).emit('uc:state', ucPublic(gs));
+  const win = ucCheckWin(gs);
+  if (win) { addTimer(room, () => endUC(room, win), 4000); return; }
+  gs.round++;
+  addTimer(room, () => ucStartClues(room), 4500);
+}
+
+function ucAction(room, socket, data) {
+  const gs = room.gameState;
+  const pd = gs?.playerData?.[socket.id];
+  if (!pd) return;
+  // Guessing is the one action a dead player still has — check it before `alive`.
+  if (data.action === 'white_guess') { ucWhiteGuess(room, socket.id, data.guess); return; }
+  if (!pd.alive) return;
+
+  switch (data.action) {
+    case 'clue':
+      ucSubmitClue(room, socket.id, data.word);
+      break;
+    case 'vote': {
+      if (gs.phase !== 'voting' || data.targetId === socket.id) return;
+      const target = gs.playerData[data.targetId];
+      if (!target?.alive) return;
+      pd.vote = data.targetId;
+      socket.emit('uc:vote_confirmed', { targetId: data.targetId, targetName: target.name });
+      io.to(room.code).emit('uc:state', ucPublic(gs));
+      if (ucAlive(gs).every(p => p.vote)) ucResolveVote(room);
+      break;
+    }
+  }
+}
+
+function ucCheckWin(gs) {
+  const alive = ucAlive(gs);
+  const impostors = alive.filter(p => p.role !== 'civilian');
+  if (!impostors.length) return { winner: 'civilians', reason: 'allFound' };
+  if (impostors.length >= alive.length - impostors.length) return { winner: 'undercover', reason: 'outnumber' };
+  return null;
+}
+
+function endUC(room, win) {
+  const gs = room.gameState;
+  gs.phase = 'game_over';
+  gs.result = win;
+  room.status = 'ended';
+  const allIds = Object.keys(gs.playerData);
+  const winnerIds = win.winner === 'civilians'
+    ? allIds.filter(id => gs.playerData[id].role === 'civilian')
+    : win.winner === 'mrwhite'
+      ? allIds.filter(id => gs.playerData[id].role === 'mrwhite')
+      : win.winner === 'undercover'
+        ? allIds.filter(id => gs.playerData[id].role !== 'civilian')
+        : [];
+  recordResult(room, winnerIds, allIds);
+  io.to(room.code).emit('uc:state', ucPublic(gs));
+}
+
+function ucPublic(gs) {
+  const over = gs.phase === 'game_over';
+  return {
+    phase: gs.phase, round: gs.round,
+    players: gs.order.filter(id => gs.playerData[id]).map(id => {
+      const p = gs.playerData[id];
+      // A living player's role is the whole game — it travels only once they are out.
+      const reveal = over || !p.alive;
+      return {
+        ...ucPub(p), alive: p.alive, clue: p.clue, voted: !!p.vote,
+        role: reveal ? p.role : null, word: reveal ? p.word : null,
+      };
+    }),
+    clues: gs.clues, history: gs.history,
+    speaker: gs.phase === 'clues' ? (gs.speakOrder[gs.speakerIndex] ?? null) : null,
+    deadline: gs.deadline,
+    votesCast: ucAlive(gs).filter(p => p.vote).length,
+    votesTotal: ucAlive(gs).length,
+    lastVote: gs.lastVote,
+    whiteId: gs.phase === 'white_guess' ? gs.whiteId : null,
+    whiteGuess: gs.whiteGuess,
+    result: over ? gs.result : null,
+    words: over ? { civilian: gs.civilianWord, undercover: gs.undercoverWord } : null,
+  };
 }
 
 // ─────────────────────────── START ───────────────────────────

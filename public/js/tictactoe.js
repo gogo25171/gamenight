@@ -2,16 +2,19 @@ const TicTacToe = (() => {
   let mySymbol = null;
   let state = null;
   let isTournament = false;
-  let prevBoard = Array(9).fill(null);
+  let prevBoard = [];
+  let builtSize = 0;           // grid size the DOM currently holds
   let lastTournament = null;   // replayed on a language change
 
   function init() {
-    document.querySelectorAll('.ttt-cell').forEach(cell => {
-      cell.addEventListener('click', () => {
-        if (!state || !state.board || state.winner || state.matchWinner) return;
-        if (state.currentTurn !== App.myId) return;
-        App.socket.emit('game:action', { action: 'move', index: +cell.dataset.i });
-      });
+    // The grid is rebuilt whenever the host changes the board size, so clicks are
+    // delegated from the container instead of bound to individual cells.
+    document.getElementById('ttt-board').addEventListener('click', e => {
+      const cell = e.target.closest('.ttt-cell');
+      if (!cell) return;
+      if (!state || !state.board || state.winner || state.matchWinner) return;
+      if (state.currentTurn !== App.myId) return;
+      App.socket.emit('game:action', { action: 'move', index: +cell.dataset.i });
     });
 
     document.getElementById('btn-ttt-again').addEventListener('click', () => {
@@ -156,7 +159,25 @@ const TicTacToe = (() => {
     });
   }
 
+  // Sizes above 3×3 need smaller glyphs to keep the board on one screen.
+  function buildGrid(size) {
+    if (size === builtSize) return;
+    const board = document.getElementById('ttt-board');
+    board.innerHTML = '';
+    board.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+    board.classList.toggle('ttt-board-lg', size > 3);
+    for (let i = 0; i < size * size; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'ttt-cell';
+      cell.dataset.i = i;
+      board.appendChild(cell);
+    }
+    builtSize = size;
+    prevBoard = Array(size * size).fill(null);
+  }
+
   function renderBoard() {
+    buildGrid(state.size || 3);
     const cells = document.querySelectorAll('.ttt-cell');
     document.getElementById('ttt-board').style.opacity = '1';
     cells.forEach((cell, i) => {
@@ -171,7 +192,7 @@ const TicTacToe = (() => {
         cell.classList.add('ttt-cell-pop');
       }
     });
-    prevBoard = [...(state.board || Array(9).fill(null))];
+    prevBoard = [...(state.board || [])];
   }
 
   function renderScoreKickBtn(cardId, playerId, playerName) {
@@ -201,7 +222,8 @@ const TicTacToe = (() => {
     renderScoreKickBtn('ttt-score-O', players.O.id, players.O.name);
     const matchLabel = document.getElementById('ttt-match-label');
     if (matchLabel) {
-      matchLabel.textContent = bestOf > 0 ? t('settings.opt.bestOf', { n: bestOf }) : t('settings.opt.freePlay');
+      const format = bestOf > 0 ? t('settings.opt.bestOf', { n: bestOf }) : t('settings.opt.freePlay');
+      matchLabel.textContent = `${format} · ${t('ttt.gridLabel', { size: state.size || 3, need: state.winLength || 3 })}`;
       matchLabel.classList.toggle('hidden', false);
     }
   }

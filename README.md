@@ -6,7 +6,7 @@
 [![Socket.io](https://img.shields.io/badge/Socket.io-4.7-010101?style=flat-square&logo=socketdotio)](https://socket.io)
 [![Express](https://img.shields.io/badge/Express-4.18-000000?style=flat-square&logo=express)](https://expressjs.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square)](LICENSE)
-[![Games](https://img.shields.io/badge/games-5-blueviolet?style=flat-square)](#-games)
+[![Games](https://img.shields.io/badge/games-8-blueviolet?style=flat-square)](#-games)
 [![Multiplayer](https://img.shields.io/badge/play-local%20network-0ea5e9?style=flat-square)](#-network-play)
 [![No frameworks](https://img.shields.io/badge/frontend-vanilla%20JS-f59e0b?style=flat-square)](#)
 
@@ -35,6 +35,12 @@ Run one command → share the URL → play instantly.
 | 🧠 | **Quiz** | 2+ | 15-question trivia from the internet — faster answers score more |
 | ⭕ | **Tic Tac Toe** | 2+ | Classic 1v1 with score tracking and match formats |
 | 🎨 | **Scribble** | 3+ | Draw a word while your friends race to guess it |
+| 🔴 | **Connect Four** `beta` | 2+ | Drop discs, line up four, best-of matches |
+| 🕵️ | **Undercover** `beta` | 4–12 | Everyone shares a word — one or two players do not |
+| ✂️ | **Rock Paper Scissors** `beta` | 2+ | Knockout bracket of simultaneous throws |
+
+Games marked `beta` are playable end to end but still being balanced — they carry a
+**BETA** badge on the home card, in the lobby and in the game header.
 
 ---
 
@@ -112,9 +118,12 @@ The room creator can tune settings in the lobby before the game starts. Everyone
 |------|-------------|
 | 🎨 Scribble | Draw time (40–120 s) · Rounds (2–5) · Word choices per turn (2–4) |
 | 🔪 Mongolpuri | Discussion time · Voting time |
-| ⭕ Tic Tac Toe | Free play · Best of 3 / 5 / 7 |
+| ⭕ Tic Tac Toe | Free play · Best of 3 / 5 / 7 · Board size (3×3 / 4×4 / 5×5) |
 | 🃏 UNO | No configurable settings — standard rules apply |
 | 🧠 Quiz | Questions (10 / 15 / 20 / 25) · Time per question (10 / 15 / 20 / 30 s) |
+| 🔴 Connect Four | Free play · Best of 3 / 5 / 7 · Columns (6–9) · Rows (5–7) |
+| 🕵️ Undercover | Undercovers (1 / 2) · Mr White on/off · Time per clue · Voting time |
+| ✂️ Rock Paper Scissors | Single throw · Best of 3 / 5 / 7 · Time per throw (8 / 12 / 20 s) |
 
 ---
 
@@ -137,7 +146,16 @@ The server fetches questions from the [Open Trivia Database](https://opentdb.com
 One player draws a secret word on a shared canvas while everyone else types guesses in the chat. Faster correct guesses = more points. The drawer earns bonus points for each correct guesser. Hints appear as time runs low. Roles rotate every turn.
 
 ### ⭕ Tic Tac Toe
-Classic 3×3 grid. Get three of your symbol in a row (horizontal, vertical, or diagonal) to win. X always goes first. Symbols swap each game. In match formats, first to reach the win target takes the match. Supports single-elimination tournaments for groups.
+Get your symbols in a row (horizontal, vertical, or diagonal) to win. X always goes first. Symbols swap each game. The host picks the grid: 3×3 (align 3), 4×4 (align 4) or 5×5 (align 4). In match formats, first to reach the win target takes the match. Supports single-elimination tournaments for groups.
+
+### 🔴 Connect Four `beta`
+Two players drop discs into a standing grid; the disc falls to the lowest free cell. First to line up four — in any direction — wins the game, and colours swap for the next one. The host sets the grid size and the match format.
+
+### 🕵️ Undercover `beta`
+Everyone gets a secret word. One or two players get a slightly different one, and — with Mr White enabled — someone gets no word at all. Nobody is told their role. Each round every player says one word about their own, then the table votes someone out. Civilians win by finding every impostor; the impostors win the moment they equal the civilians in number. A Mr White voted out gets one shot at naming the civilians' word to steal the win.
+
+### ✂️ Rock Paper Scissors `beta`
+The whole room is seeded into a single-elimination bracket. Both players in a match throw at the same time before the timer runs out — miss it and a throw is picked for you. Win the majority of the match and you advance; everyone else follows the bracket.
 
 ---
 
@@ -168,7 +186,12 @@ gamenight/
 │       ├── tictactoe.js     # Tic Tac Toe client UI
 │       ├── scribble.js      # Scribble canvas + chat
 │       ├── uno.js           # UNO client UI
-│       └── quiz.js          # Quiz client UI
+│       ├── quiz.js          # Quiz client UI
+│       ├── connect4.js      # Connect Four client UI
+│       ├── undercover.js    # Undercover client UI
+│       ├── rps.js           # Rock Paper Scissors client UI
+│       ├── i18n.js          # Per-player interface language
+│       └── i18n/            # en.json · fr.json
 ├── start.bat            # Windows one-click launcher
 ├── start.sh             # macOS / Linux launcher
 └── package.json
