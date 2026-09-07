@@ -411,6 +411,7 @@ Trois postures possibles, par ordre de réalisme :
    restreinte (envoyer/recevoir des événements, rien d'autre). C'est la seule vraie
    réponse, et de loin la plus coûteuse. ⚠️ Le module `vm` de Node **n'est pas** une
    frontière de sécurité — ne pas s'en servir pour ça.
+
 - [ ] Afficher clairement, à l'installation, ce que le jeu peut faire, et l'assumer
       dans [SECURITY.md](SECURITY.md)
 

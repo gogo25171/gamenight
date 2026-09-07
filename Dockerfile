@@ -10,6 +10,10 @@ RUN npm ci --omit=dev && npm cache clean --force
 # ─────────────── runtime ───────────────
 FROM node:20-alpine
 
+# Pull patched Alpine packages. The base image lags behind openssl
+# security releases, and Trivy fails the build on fixable CVEs.
+RUN apk upgrade --no-cache
+
 ENV NODE_ENV=production
 ENV PORT=4000
 

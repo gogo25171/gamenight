@@ -1,0 +1,7 @@
+node_modules/
+site/
+
+# README.md belongs to the upstream project this repo is forked from.
+# Reformatting it would conflict with every `git pull upstream main`, so it is
+# linted by upstream's rules, not ours.
+README.md
