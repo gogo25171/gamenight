@@ -17,7 +17,7 @@
 ## Checklist
 
 - [ ] `node --check` passes on every file I touched
-- [ ] `node test-tournament.js` still passes
+- [ ] `npm test` still passes
 - [ ] `pre-commit run --all-files` is clean
 - [ ] I tested reconnecting mid-game (refresh the page)
 - [ ] I tested a player leaving mid-game
