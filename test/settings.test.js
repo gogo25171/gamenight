@@ -102,3 +102,20 @@ test('each schema default is itself a valid value', () => {
     }
   }
 });
+
+// The mirror of the test above, and the one that was missing: `killerdoctor`
+// shipped a `nightTime` default the lobby had no control for, so the host could
+// see every other timer but never that one.
+test('every default the server ships has a control in the lobby', () => {
+  const schema = loadSettingsSchema();
+  for (const game of GAMES) {
+    const defaults = Object.keys(app.defaultSettings(game));
+    const rendered = (schema[game] || []).map(f => f.id);
+    for (const key of defaults) {
+      assert.ok(
+        rendered.includes(key),
+        `${game}.${key} has a server default but no field in SETTINGS_SCHEMA — the host cannot change it`,
+      );
+    }
+  }
+});

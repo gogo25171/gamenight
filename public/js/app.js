@@ -85,6 +85,8 @@ const SETTINGS_SCHEMA = {
       options: [{v:2,k:'settings.opt.words',p:{count:2}},{v:3,k:'settings.opt.words',p:{count:3},star:true},{v:4,k:'settings.opt.words',p:{count:4}}] },
   ],
   killerdoctor: [
+    { id: 'nightTime', label: 'settings.nightTime', default: 45, isTime: true,
+      options: [{v:30,k:'settings.opt.sec',p:{n:30}},{v:45,k:'settings.opt.sec',p:{n:45},star:true},{v:60,k:'settings.opt.sec',p:{n:60}},{v:90,k:'settings.opt.sec',p:{n:90}}] },
     { id: 'discussionTime', label: 'settings.discussionTime', default: 45, isTime: true,
       options: [{v:60,k:'settings.opt.min',p:{n:1}},{v:90,k:'settings.opt.sec',p:{n:90}},{v:120,k:'settings.opt.min',p:{n:2},star:true},{v:150,k:'settings.opt.min',p:{n:2.5}},{v:180,k:'settings.opt.min',p:{n:3}}] },
     { id: 'votingTime', label: 'settings.votingTime', default: 45, isTime: true,

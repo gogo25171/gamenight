@@ -80,6 +80,7 @@
   "settings.rounds": "Manches",
   "settings.wordChoices": "Mots proposés par tour",
   "settings.discussionTime": "Temps de discussion",
+  "settings.nightTime": "Temps de nuit",
   "settings.votingTime": "Temps de vote",
   "settings.matchFormat": "Format du match",
   "settings.questions": "Questions",

@@ -80,6 +80,7 @@
   "settings.rounds": "Rounds",
   "settings.wordChoices": "Word Choices per Turn",
   "settings.discussionTime": "Discussion Time",
+  "settings.nightTime": "Night Time",
   "settings.votingTime": "Voting Time",
   "settings.matchFormat": "Match Format",
   "settings.questions": "Questions",
