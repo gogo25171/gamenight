@@ -171,3 +171,39 @@ test('best of 3 ends the match after two wins', () => {
   assert.equal(gs.gameCount, 2, 'no new game once the match is decided');
   stopTimers(room);
 });
+
+// Regression: the client only shows "Next Game" to the host, and only once the
+// game is over. The server used to take the action from anyone at any time, so a
+// losing player could wipe a live grid with a hand-made `game:action`.
+test('a new game is refused while the grid is still being played', () => {
+  const room = makeRoom('connect4', 2);
+  app.startC4(room);
+  const gs = room.gameState;
+  app.c4Drop(room, sock(gs.players.R.id), 3);
+  const boardBefore = [...gs.board];
+
+  app.c4NewGame(room);
+  assert.deepEqual(gs.board, boardBefore, 'the grid survived');
+  assert.equal(gs.gameCount, 1, 'no new game was dealt');
+  stopTimers(room);
+});
+
+test('only the host can ask for the next game', () => {
+  const room = makeRoom('connect4', 3);   // p1 is the host, p3 a spectator
+  app.startC4(room);
+  const gs = room.gameState;
+  const red = gs.players.R.id, yellow = gs.players.Y.id;
+  for (const col of [0, 1, 2, 3]) {
+    app.c4Drop(room, sock(red), col);
+    if (col < 3) app.c4Drop(room, sock(yellow), 6);
+  }
+  assert.equal(gs.winner, red, 'red won the game');
+
+  const notHost = ['p1', 'p2', 'p3'].find(id => id !== room.host);
+  app.handleAction(room, sock(notHost), { action: 'new_game' });
+  assert.equal(gs.gameCount, 1, `${notHost} is not the host and must not deal again`);
+
+  app.handleAction(room, sock(room.host), { action: 'new_game' });
+  assert.equal(gs.gameCount, 2, 'the host deals the next game');
+  stopTimers(room);
+});

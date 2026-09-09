@@ -329,14 +329,16 @@ function restartGame(room) {
 
 function handleAction(room, socket, data) {
   const gs = room.gameState; if (!gs) return;
+  const isHost = room.host === socket.id;
   switch (room.gameType) {
     case 'tictactoe':
       if (data.action === 'move')     tttMove(room, socket, data.index);
-      if (data.action === 'new_game' && room.gameState?.mode !== 'tournament') tttNewGame(room);
+      // Only the host is offered the button, so only the host may deal again.
+      if (data.action === 'new_game' && isHost && room.gameState?.mode !== 'tournament') tttNewGame(room);
       break;
     case 'connect4':
       if (data.action === 'drop')     c4Drop(room, socket, data.col);
-      if (data.action === 'new_game') c4NewGame(room);
+      if (data.action === 'new_game' && isHost) c4NewGame(room);
       break;
     case 'rps':          rpsAction(room, socket, data); break;
     case 'undercover':   ucAction(room, socket, data); break;
@@ -699,6 +701,7 @@ function tttMove(room, socket, index) {
 function tttNewGame(room) {
   const gs = room.gameState;
   if (!gs || gs.mode === 'tournament' || gs.matchWinner) return;
+  if (!gs.winner) return;   // the current game is still running
   const tmp = gs.players.X; gs.players.X = gs.players.O; gs.players.O = tmp;
   gs.board = Array(gs.size * gs.size).fill(null);
   gs.currentTurn = gs.players.X.id;
@@ -1511,6 +1514,7 @@ function c4Drop(room, socket, col) {
 function c4NewGame(room) {
   const gs = room.gameState;
   if (!gs || gs.matchWinner) return;
+  if (!gs.winner) return;   // the current game is still running
   // Colours swap so the first-move advantage does not stick to one seat.
   const tmp = gs.players.R; gs.players.R = gs.players.Y; gs.players.Y = tmp;
   gs.board = Array(gs.cols * gs.rows).fill(null);

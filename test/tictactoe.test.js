@@ -211,3 +211,34 @@ test('free play never declares a match winner', () => {
   assert.equal(gs.scores[champion], 4, 'free play keeps counting');
   stopTimers(room);
 });
+
+// Same regression as Connect Four: `new_game` is a host action on a finished
+// board, not a reset button anyone can press mid-game.
+test('a new game is refused while the board is still being played', () => {
+  const room = makeRoom('tictactoe', 2);
+  app.startTTT(room);
+  const gs = room.gameState;
+  app.tttMove(room, sock(gs.players.X.id), 4);
+  const boardBefore = [...gs.board];
+
+  app.tttNewGame(room);
+  assert.deepEqual(gs.board, boardBefore, 'the board survived');
+  assert.equal(gs.gameCount, 1, 'no new game was dealt');
+  stopTimers(room);
+});
+
+test('only the host can ask for the next game', () => {
+  const room = makeRoom('tictactoe', 2);
+  app.startTTT(room);
+  const gs = room.gameState;
+  winTopRow(room, gs.players.X.id);
+  assert.ok(gs.winner, 'a game has been won');
+
+  const notHost = ['p1', 'p2'].find(id => id !== room.host);
+  app.handleAction(room, sock(notHost), { action: 'new_game' });
+  assert.equal(gs.gameCount, 1, `${notHost} is not the host and must not deal again`);
+
+  app.handleAction(room, sock(room.host), { action: 'new_game' });
+  assert.equal(gs.gameCount, 2, 'the host deals the next game');
+  stopTimers(room);
+});
