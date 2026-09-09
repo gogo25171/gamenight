@@ -30,9 +30,10 @@ Le socle. Tant que ce n'est pas fait, chaque nouveauté augmente la dette.
 
 | Chantier | Pourquoi maintenant | Effort |
 |----------|---------------------|--------|
-| [Sortir les 3 jeux de bêta](#-jeux-à-ajouter) — soirées de test, équilibrage, retrait du badge | Trois jeux livrés mais jamais joués pour de vrai. Les tester en conditions réelles **avant** d'en écrire un quatrième | 2-3 soirées |
+| [Sortir les 3 jeux de bêta](#-sortir-les-3-jeux-de-bêta) — soirées de test, équilibrage, retrait du badge | Trois jeux livrés mais jamais joués pour de vrai. Le câblage est vérifié et documenté (audit ci-dessous) ; il reste **les soirées de test** | 2-3 soirées |
 | [Découper `server.js`](#-bugs--dette-technique) en `games/<id>.js` | 1 900 lignes. Ce n'est plus un blocage pour les tests, mais ça le redevient pour la relecture dès le prochain jeu | 1 jour |
-| [Réglage `nightTime` absent du lobby](#-bugs--dette-technique) | Bug déjà identifié, correction en dix minutes, et un test l'attrape maintenant | 10 min |
+| ~~[Réglage `nightTime` absent du lobby](#-bugs--dette-technique)~~ | ✅ **fait** — le champ est dans `SETTINGS_SCHEMA`, et un test vérifie désormais que *chaque* défaut serveur a un contrôle dans le lobby | ~~10 min~~ |
+| [Anti-triche / anti-bot](#-anti-triche-anti-bot-anti-abus) — au minimum le jeton de reconnexion | Un salon en cours se reprend **avec le seul pseudo** : n'importe qui dans le salon peut voler la session d'un autre et son rôle secret. C'est le trou le plus large du projet | 1 jour |
 
 ### 🟠 P1 — le prochain vrai morceau
 
@@ -52,7 +53,7 @@ Un seul à la fois. Mon ordre :
 | [Tests plus fins](#-tests--arrêter-de-découvrir-les-régressions-en-soirée) | Mongolpuri de bout en bout, UNO au niveau du tour, scoring. La base est là ; ceci est du raffinement |
 | [Variantes de jeux](#-variantes-de-jeux--à-réfléchir) | Beaucoup de plaisir pour peu de code — souvent un seul réglage |
 | [Numéro de version par jeu](#-numéro-de-version-par-jeu) | Devient utile le jour où les retours des joueurs arrivent |
-| [Retours des joueurs](#-espace-de-commentaires--retours-des-joueurs) | Utile seulement s'il y a des joueurs autres que soi |
+| [Retours des joueurs](#-espace-de-commentaires--retours-des-joueurs) | Les formulaires GitHub sont en place et mis en avant ; le formulaire **dans l'app** reste à faire, et il ne vaut que s'il y a des joueurs autres que soi |
 | [Configuration `.env`](#-configuration-par-fichier-env) | Confort d'hébergement, invisible pour les joueurs |
 | [Documentation : captures et diagrammes](#-faire-évoluer-la-documentation) | Le manque le plus visible pour un nouvel arrivant |
 | [Plus de langues](#-traduction--i18n--par-joueur) | EN et FR couvrent déjà la table |
@@ -69,10 +70,11 @@ Un seul à la fois. Mon ordre :
 
 Dans l'ordre, chaque ligne se termine en une session :
 
-1. Corriger `nightTime` (absent du schéma de lobby) — et écrire le test qui l'aurait attrapé.
-2. Supprimer `test-tournament.js`, maintenant que [test/tournament.test.js](test/tournament.test.js) teste le vrai code.
-3. Ajouter « écrire les tests du jeu » à la [checklist d'ajout d'un jeu](#-checklist--ajouter-un-jeu).
+1. ~~Corriger `nightTime` (absent du schéma de lobby)~~ — ✅ fait, avec le test qui l'aurait attrapé.
+2. ~~Supprimer `test-tournament.js`~~ — ✅ fait ; il gardait sa propre copie des fonctions de bracket, [test/tournament.test.js](test/tournament.test.js) teste les vraies.
+3. ~~Ajouter « écrire les tests du jeu » à la [checklist d'ajout d'un jeu](#-checklist--ajouter-un-jeu)~~ — ✅ fait, ici et dans [adding-a-game.md](docs/development/adding-a-game.md).
 4. Une variante « morpion misère » — un réglage, une condition inversée, un test.
+5. Borner `gs.drawingData` de Scribble — un client bricolé peut faire grossir le tableau sans limite ([anti-abus](#-anti-triche-anti-bot-anti-abus)).
 
 ---
 
@@ -132,6 +134,71 @@ Classés par effort d'implémentation. « Réutilise » = infra déjà en place 
 5. **Gartic Phone** — gros potentiel de fous rires, et le canevas de Scribble est déjà écrit.
 6. **Cartes contre l'humanité (SFW)** — fort effet de groupe, moteur simple.
 7. **Quiz emoji local** — supprime la dépendance internet du Quiz.
+
+---
+
+## 🚧 Sortir les 3 jeux de bêta
+
+Puissance 4, Undercover et Pierre-Feuille-Ciseaux sont livrés depuis
+[a6f8e24](https://github.com/gogo25171/gamenight/commit/a6f8e24) et portent un badge
+`BETA`. Question posée le 09/09/2026 : **sont-ils finis ?**
+
+### ✅ Ce qui est vérifié (audit de code, 09/09/2026)
+
+Les trois jeux sont **complets côté câblage** — rien ne manque des sept points
+d'intégration serveur ni des sept points client :
+
+| | Vérifié pour les 3 jeux |
+|--|-------------------------|
+| ✅ | `defaultSettings` · `validateSettings` · `minPlayers` · map de `restartGame` **et** de `game:start` · `handleAction` · `sendReconnectState` · `onPlayerDisconnect` |
+| ✅ | Carte d'accueil · vue · onglet de règles · balise `<script>` · module client · listeners socket · `gameKeys` · `SETTINGS_SCHEMA` |
+| ✅ | Reconnexion avec l'état **privé** : le mot d'Undercover, la couleur de Puissance 4, le coup P-F-C déjà joué |
+| ✅ | Départ en cours de partie : P-F-C fait avancer le bracket, Undercover relance l'orateur suivant et termine en `abandoned` sous 3 vivants |
+| ✅ | Secrets : rien ne fuit dans une diffusion salon (couvert par [test/secrets.test.js](test/secrets.test.js)) |
+| ✅ | `en.json` / `fr.json` à parité, badge `BETA` piloté par `BETA_GAMES` |
+| ✅ | Tests dédiés : [connect4](test/connect4.test.js) · [rps](test/rps.test.js) · [undercover](test/undercover.test.js) |
+| ✅ | Doc joueur : [connect4.md](docs/games/connect4.md) · [undercover.md](docs/games/undercover.md) · [rps.md](docs/games/rps.md) — et la doc technique dans [game-internals.md](docs/development/game-internals.md) |
+
+### 🔧 Corrigé pendant l'audit
+
+- [x] `new_game` de Puissance 4 (et du morpion) n'était **ni réservé à l'hôte ni
+      conditionné à la fin de la partie** : n'importe quel client pouvait effacer une
+      grille en cours avec un `game:action` fait main. Serveur corrigé + un test par jeu
+- [x] Undercover était le **seul jeu bêta sans badge dans sa propre vue** — la barre
+      latérale nomme désormais le jeu et porte le badge, et un test vérifie les trois
+      surfaces (carte, lobby, vue) pour chaque entrée de `BETA_GAMES`
+- [x] `nightTime` de Mongolpuri absent du lobby (bug P0 de longue date), avec le test
+      « chaque défaut serveur a un contrôle dans le lobby »
+
+### ⏳ Ce qui reste avant de retirer le badge
+
+Rien de bloquant côté code ; ce sont des décisions de jeu, qui demandent d'y jouer.
+
+- [ ] **Puissance 4 — départ d'un joueur** : `onPlayerDisconnect` envoie une
+      notification et laisse la grille figée. Personne ne gagne, l'hôte doit repasser par
+      le lobby. Choisir : victoire par forfait (comme le tournoi morpion), ou promotion
+      automatique d'un spectateur. Le morpion en duel a exactement le même trou
+- [ ] **Puissance 4 — rotation des spectateurs** : à 4 joueurs, deux regardent toute la
+      soirée. Une file d'attente (« le gagnant reste ») serait plus juste que « l'hôte
+      relance »
+- [ ] **Undercover — les clamps silencieux** : Mr White exige 5 joueurs, un 2ᵉ undercover
+      avec Mr White en exige 7. Le serveur réduit le choix de l'hôte **sans rien dire**.
+      Afficher la contrainte dans le lobby (« Mr White : 5 joueurs minimum »)
+- [ ] **Undercover — les paires de mots sont en anglais**, côté serveur, partagées par
+      tout le salon. Une table francophone joue avec `Coffee` / `Tea`. C'est le seul
+      endroit où l'i18n par joueur ne peut pas suivre → réglage `language` du salon
+      alimentant une table de paires par langue
+- [ ] **P-F-C — le coup aléatoire de fin de timer** peut décider un match sans que
+      personne ait joué (surtout en « lancer unique »). Décider : garder, ou perdre la
+      manche au lieu de tirer au sort
+- [ ] **P-F-C — le rythme** (2,8 s de révélation + 1,4 s entre matchs) n'a jamais été
+      jugé à table. Trop lent à 8 joueurs ?
+- [ ] **Deux soirées de test réelles** par jeu, avec des joueurs qui ne connaissent pas
+      le code. C'est la seule chose que l'audit ne peut pas remplacer
+- [ ] Puis retirer le badge : `BETA_GAMES` dans [app.js](public/js/app.js#L73), les trois
+      `<span class="badge-beta">` d'[index.html](public/index.html), le `beta` du
+      [README](README.md), les `:material-flask:` de [docs/games/](docs/games/) et l'entête
+      de ce fichier
 
 ---
 
@@ -246,10 +313,25 @@ Points d'intégration réels dans le code (exemple avec `monjeu`).
 - [ ] `public/js/i18n/en.json` **et** `fr.json` — les deux dictionnaires doivent avoir
       exactement les mêmes clés, sinon une langue dégrade en silence
 
+### Tests — [test/](test/)
+
+- [ ] Les règles qui décident un vainqueur (alignement, conditions de victoire, scoring)
+- [ ] Un coup illégal : hors tour, hors grille, spectateur, coup après la fin
+- [ ] Une entrée dans [test/secrets.test.js](test/secrets.test.js) : l'état privé du jeu
+      ne part **jamais** dans une diffusion salon
+- [ ] Une ligne dans le test de câblage de [test/lifecycle.test.js](test/lifecycle.test.js)
+      (carte d'accueil, vue, onglet de règles, reconnexion privée)
+- [ ] ⚠️ Piloter les phases (`monjeuStartRound(room)`) au lieu d'attendre les timers, et
+      finir par `stopTimers(room)` — sinon `node --test` ne rend jamais la main
+- [ ] ⚠️ Sélectionner les joueurs **par leur rôle**, jamais par leur position
+
 ### Finition
 
 - [ ] Tableau des jeux + section « How to Play » dans [README.md](README.md)
 - [ ] Badge `games-N` du README à incrémenter
+- [ ] Page de jeu dans [docs/games/](docs/games/) + entrée dans la nav de [mkdocs.yml](mkdocs.yml)
+- [ ] Section dans [docs/development/game-internals.md](docs/development/game-internals.md) :
+      d'abord ce qu'on personnalise (mots, cartes, durées), ensuite comment ça marche
 - [ ] Tester : reconnexion en pleine partie · départ d'un joueur · rejouer · spectateurs
 
 ---
@@ -604,11 +686,151 @@ ne veut d'un assistant qui souffle à l'oreille d'un adversaire.
 
 ---
 
+## 🚨 Anti-triche, anti-bot, anti-abus
+
+### Le modèle de menace, d'abord
+
+Ce projet tourne sur un LAN, entre gens qui se connaissent. L'adversaire réaliste
+n'est pas un attaquant d'internet : c'est **l'ami qui ouvre les devtools**, celui
+qui ouvre deux onglets pour voter deux fois, et le petit malin qui script un
+client pour gagner le tournoi P-F-C.
+
+Deux conséquences :
+
+1. **Proportionnalité.** Pas de captcha, pas de comptes, pas d'empreinte de
+   navigateur. Chaque garde-fou doit coûter moins cher que le problème qu'il règle.
+2. **Sauf si le serveur est exposé.** Le jour où l'on ouvre un port sur internet
+   (voir l'avertissement de la section [`.env`](#-configuration-par-fichier-env)),
+   tout ce qui suit passe de « confort » à « obligatoire ».
+
+### ✅ Ce qui protège déjà
+
+Le socle est meilleur que la moyenne, autant le noter avant d'empiler :
+
+- `validateSettings()` est une **liste blanche** : une valeur inconnue est jetée, pas ramenée dans les clous
+- Les secrets partent **socket par socket**, jamais dans une diffusion salon — et [test/secrets.test.js](test/secrets.test.js) le vérifie pour les 8 jeux
+- Chaque action de jeu revalide **le tour, la phase et la légalité du coup** côté serveur
+- Les actions d'hôte (`game:start`, `game:restart`, `room:kick`, `room:settings`, `new_game`) vérifient `room.host === socket.id`
+- Les pseudos et les avatars sont uniques par salon
+- Un salon vide est détruit avec ses timers
+
+### 🚨 Le trou le plus large : reprendre une session avec un simple pseudo
+
+Dans `room:join`, quand une partie est en cours, la reconnexion se fait **sur le
+seul pseudo** :
+
+```js
+const existing = [...room.players.values()].find(p => p.name === playerName?.trim());
+existing.id = socket.id;          // la session change de propriétaire
+```
+
+Autrement dit : qui connaît le code du salon et le pseudo d'un joueur — c'est-à-dire
+**tout le monde dans le salon**, les pseudos sont affichés — peut prendre sa place et
+recevoir son rôle secret, sa main UNO ou son mot d'Undercover. La victime devient un
+fantôme : son ancien socket reste abonné aux diffusions mais n'est plus dans
+`room.players`.
+
+- [ ] **Jeton de reconnexion** : un identifiant aléatoire donné à l'entrée, stocké en
+      `localStorage` à côté du pseudo et de l'avatar, exigé pour reprendre une place
+- [ ] Refuser la reprise si le socket d'origine est **toujours connecté** — une
+      reconnexion légitime suit toujours une déconnexion
+- [ ] Nettoyer `playerRooms` et faire quitter le salon à l'ancien socket lors d'une reprise
+- [ ] Journaliser les reprises côté serveur : c'est le seul endroit où une triche laisse
+      une trace exploitable
+
+### 🎮 Triche jeu par jeu
+
+| Jeu | La triche | Ce qu'on peut faire |
+|-----|-----------|---------------------|
+| **Tous** | Deux onglets, deux pseudos → deux votes, deux mains | Empreinte faible (même IP + même `localStorage`) et **avertir l'hôte**, pas bloquer : deux joueurs partagent parfois un ordinateur |
+| **Quiz** | Chercher la réponse dans un autre onglet | Insoluble techniquement. Un chrono court (10 s) et une banque locale de questions moins googlables font plus qu'un garde-fou |
+| **Undercover · Mongolpuri** | Se coordonner par Discord / à voix basse | Hors de portée du code, et c'est en partie le jeu. À dire dans les règles plutôt qu'à combattre |
+| **Scribble** | Le dessinateur écrit le mot, ou un joueur qui a trouvé le souffle | ✅ déjà couvert : le chat du dessinateur et celui des joueurs ayant trouvé sont **jetés** pendant la manche |
+| **Scribble** | Envoyer des traits sans être dessinateur, ou par milliers | ✅ le rôle est vérifié · ❌ le contenu et le volume ne le sont pas (voir anti-abus) |
+| **P-F-C** | Un client scripté qui joue en 3 ms, chaque manche | Détecter l'impossible plutôt que le rapide (voir anti-bot) |
+| **Puissance 4 · Morpion** | Un solveur parfait en arrière-plan | Impossible à distinguer d'un bon joueur. La vraie réponse est les [bots officiels](#-bots--compléter-une-table-ou-jouer-tout-seul) : si on veut jouer contre une machine, autant que ce soit assumé |
+
+### 🤖 Anti-bot — détecter l'automatisation, pas la vitesse
+
+- [ ] **Limite de débit par socket et par événement** : un compteur en fenêtre glissante
+      (par ex. 20 `game:action` / 10 s, 10 `chat:send` / 10 s). Un joueur normal ne s'en
+      approche jamais
+- [ ] **Plancher de temps de réaction** : un coup arrivé moins de ~150 ms après le début
+      d'une phase n'est pas humain. Ne pas rejeter — **compter**, et signaler à l'hôte au
+      bout de N fois. Un faux positif qui exclut un joueur coûte plus cher que la triche
+- [ ] **Régularité** : un humain a de la variance. Dix coups au même millier de
+      millisecondes près, c'est un script
+- [ ] Un indicateur discret côté hôte (« 3 actions suspectes »), **jamais** une accusation
+      publique automatique. C'est une soirée entre amis, pas un tribunal
+- [ ] ⚠️ Ne pas confondre bot et [bot officiel](#-bots--compléter-une-table-ou-jouer-tout-seul) :
+      quand la section « Bots » sera implémentée, ses joueurs devront être marqués comme
+      tels et exemptés de ces contrôles
+
+### 🧯 Anti-abus — ce qui peut casser le serveur ou le salon
+
+Ces points sont concrets et vérifiés dans le code actuel. Les deux premiers sont des
+corrections de dix minutes.
+
+- [ ] **Indice d'avatar non borné.** `room:join` accepte `Number(avatar) || 0`, sans
+      maximum, et le client fait `AVATARS[p.avatar].emoji` : un `avatar: 9999` fait
+      **planter le rendu du lobby de tout le monde**. Borner côté serveur
+- [ ] **Longueur du pseudo non bornée.** `playerName.trim()` n'a aucune limite : un
+      pseudo de 100 000 caractères part dans toutes les diffusions. Couper à ~20
+      caractères (le champ HTML le fait déjà, le serveur non)
+- [ ] **`gs.drawingData` sans limite.** Chaque trait est poussé dans un tableau que
+      personne ne borne, et `data.stroke` est **rediffusé sans validation de forme ni de
+      taille** : c'est le chemin le plus court vers une saturation mémoire et une
+      inondation de tous les clients. Valider la forme du trait et plafonner le tableau
+- [ ] **Aucune limite sur `room:create`.** Une boucle crée des salons jusqu'à épuisement
+      de la mémoire. Un plafond global de salons + un quota par IP
+- [ ] **Aucune limite de débit sur `chat:send`.** La longueur est coupée à 400
+      caractères, la fréquence n'est pas contrôlée
+- [ ] Plafonner la taille des messages Socket.io (`maxHttpBufferSize`, 1 Mo par défaut —
+      trop pour ce projet)
+- [ ] Le futur [`POST /api/feedback`](#-espace-de-commentaires--retours-des-joueurs) hérite
+      du même problème : limite de longueur **et** de débit dès la première ligne écrite
+
+### 🔨 Modération, pour l'hôte
+
+- [x] ~~Kick d'un joueur par l'hôte~~ — existe déjà, depuis le lobby et en cours de partie
+- [ ] Ré-entrée immédiate après un kick : rien ne l'empêche aujourd'hui. Une liste de
+      bannis par salon (mémoire, durée de vie du salon) suffirait
+- [ ] Transfert d'hôte automatique si l'hôte part **en cours de partie** (aujourd'hui le
+      premier joueur de la Map devient hôte, sans que personne ne l'apprenne clairement)
+- [ ] Salon verrouillable (« plus personne n'entre ») — utile quand le code a circulé
+- [ ] Filtre de gros mots sur les pseudos ? **Mon avis : non.** Faux positifs garantis, et
+      l'hôte a déjà le kick
+
+### 🧪 Tests à écrire avec
+
+Chaque garde-fou de cette section se teste sans socket, en appelant les fonctions
+directement — comme le reste de la suite :
+
+- [ ] Une reprise de session sans jeton valide est refusée
+- [ ] Une reprise est refusée tant que le socket d'origine est connecté
+- [ ] Un `avatar` et un pseudo hors bornes sont normalisés, pas propagés
+- [ ] La limite de débit laisse passer un rythme humain et bloque un rythme de script
+- [ ] Un trait de dessin mal formé est jeté sans être rediffusé
+
+### 💬 Mon avis sur l'ordre
+
+1. **Le jeton de reconnexion** — c'est le seul point de cette section qui permet de
+   voler le rôle secret d'un autre joueur. Tout le reste est du confort.
+2. **Les trois bornes** (avatar, pseudo, traits de dessin) — trente minutes à trois,
+   et elles suppriment les seuls plantages provoquables à distance.
+3. **Les limites de débit**, quand elles auront un vrai usage : un salon exposé, ou un
+   joueur qui s'ennuie.
+4. **La détection d'automatisation**, en dernier. Elle n'a de sens qu'une fois les bots
+   officiels écrits, pour ne pas signaler les siens.
+
+---
+
 ## 🐛 Bugs / dette technique
 
 - [x] ~~`gameNames` ne contient pas `quiz` → le lobby affiche « Lobby » au lieu de « Quiz »~~ — corrigé au passage de l'i18n : la table est devenue `gameKeys` dans [app.js](public/js/app.js) et contient les cinq jeux. Y ajouter tout nouveau jeu.
-- [ ] `killerdoctor` a un `nightTime` dans `defaultSettings` mais aucune option correspondante dans le schéma client d'[app.js](public/js/app.js#L78) — réglage non modifiable depuis le lobby.
-- [ ] [server.js](server.js) fait 1367 lignes : découper en `games/tictactoe.js`, `games/uno.js`, etc. avant d'ajouter 3-4 jeux de plus.
+- [x] ~~`killerdoctor` a un `nightTime` dans `defaultSettings` mais aucune option correspondante dans le schéma client d'[app.js](public/js/app.js#L78)~~ — corrigé : champ ajouté (30 / **45** / 60 / 90 s), plus un test « chaque défaut serveur a un contrôle dans le lobby » qui empêche le prochain oubli.
+- [x] ~~`new_game` (morpion, Puissance 4) n'était ni réservé à l'hôte ni conditionné à la fin de la partie~~ — corrigé : le serveur exige les deux, avec un test de non-régression par jeu. Le client n'affichait le bouton qu'à l'hôte, le serveur acceptait l'action de n'importe qui, à n'importe quel moment.
+- [ ] [server.js](server.js) fait ~1 980 lignes : découper en `games/tictactoe.js`, `games/uno.js`, etc. avant d'ajouter 3-4 jeux de plus.
 - [ ] Le Quiz nécessite internet (opentdb.com) — prévoir une banque de questions locale en repli.
 - [ ] Pas de `LICENSE` dans le repo alors que le README annonce MIT.
 
@@ -616,7 +838,7 @@ ne veut d'un assistant qui souffle à l'oreille d'un adversaire.
 
 ### ✅ État d'avancement
 
-La base est en place : **97 tests**, ~4 s, zéro dépendance ajoutée.
+La base est en place : **102 tests**, ~10 s, zéro dépendance ajoutée.
 
 | | Quoi |
 |--|------|
@@ -702,13 +924,18 @@ une ligne à la fois, un jour de pluie.
       seulement après
 - [x] ~~Brancher `npm run i18n:check`~~ — fait, en CI et en pre-commit
 - [ ] Un test de non-régression pour **chaque bug corrigé** : le test échoue d'abord,
-      la correction le fait passer. C'est ce qui empêche le bug de revenir
-- [ ] Ajouter « écrire les tests du jeu » à la checklist « ajouter un jeu »
-- [ ] Supprimer [test-tournament.js](test-tournament.js) : il garde sa **propre copie**
-      de `buildTournamentRounds` / `propagateTournamentWinners`, alors que
-      [test/tournament.test.js](test/tournament.test.js) teste désormais les vraies.
-      Deux tests du même sujet, dont un qui peut passer sur du code mort, c'est pire
-      qu'un seul. À supprimer avec la mention dans [CONTRIBUTING.md](CONTRIBUTING.md)
+      la correction le fait passer. C'est ce qui empêche le bug de revenir.
+      Appliqué aux trois corrections du 09/09/2026 (`nightTime`, `new_game` hôte,
+      badge bêta manquant) — à tenir pour les suivantes
+- [x] ~~Ajouter « écrire les tests du jeu » à la checklist « ajouter un jeu »~~ — fait,
+      dans ce fichier et dans [adding-a-game.md](docs/development/adding-a-game.md)
+- [x] ~~Supprimer `test-tournament.js`~~ — fait. Il gardait sa **propre copie** de
+      `buildTournamentRounds` / `propagateTournamentWinners`, donc il pouvait passer au
+      vert sur du code mort pendant que le vrai serveur était cassé.
+      [test/tournament.test.js](test/tournament.test.js) couvre le même terrain (2 à 16
+      joueurs) contre les vraies fonctions. Les mentions dans
+      [CLAUDE.md](CLAUDE.md), le [modèle de PR](.github/pull_request_template.md) et
+      [docs/games/tictactoe.md](docs/games/tictactoe.md) pointent maintenant sur `npm test`
 - [ ] Faire tourner la suite **en parallèle** si elle dépasse ~15 s ; à 4 s ce n'est
       pas un sujet
 
@@ -759,6 +986,30 @@ un bug de règle.
 Permettre à un joueur d'envoyer un retour **en quelques secondes, sans quitter la
 partie** : un bug, une idée, « ce jeu est trop long », « le chrono du vote est trop
 court ».
+
+### ✅ Ce qui existe déjà — le canal hors de l'app
+
+Rien n'est encore dans le jeu, mais le suivi GitHub a **trois formulaires courts**, un
+par type de retour, et ils sont maintenant mis en avant là où on les cherche :
+
+| Formulaire | Pour |
+|------------|------|
+| [🐛 Bug report](.github/ISSUE_TEMPLATE/bug_report.yml) | Quelque chose a cassé, s'est bloqué, ou affiche faux |
+| [💡 Feature request](.github/ISSUE_TEMPLATE/feature_request.yml) | Un réglage, une variante, un confort |
+| [🎲 New game](.github/ISSUE_TEMPLATE/new_game.yml) | Un jeu à ajouter |
+
+- [x] ~~Rubrique « signaler un bug / proposer un jeu » visible pour un joueur~~ — ajoutée
+      dans le [README](README.md) et dans [docs/games/index.md](docs/games/index.md), avec la
+      consigne qui rend un rapport exploitable ici : **le nombre de joueurs et la phase**
+      au moment du problème
+- [ ] La même rubrique dans la modale « How to Play » de l'app, ou à côté du bouton de
+      sortie : un joueur sur son téléphone ne lira jamais le README
+- [ ] Un lien dans l'écran de fin de partie vers le formulaire de bug pré-rempli
+      (`?template=bug_report.yml&title=…`) — sans compte GitHub ça reste un cul-de-sac,
+      d'où le formulaire interne ci-dessous
+
+> Le reste de cette section est le **retour dans l'app**, qui ne demande ni compte ni
+> internet. C'est l'objectif ; les formulaires GitHub sont le canal en attendant.
 
 ### Le déclencheur
 
@@ -1191,15 +1442,25 @@ titre que le temps de dessin.
 
 ## 📚 Faire évoluer la documentation
 
-La doc [MkDocs Material](mkdocs.yml) a la bonne structure (14 pages, nav propre, thème
+La doc [MkDocs Material](mkdocs.yml) a la bonne structure (18 pages, nav propre, thème
 configuré) mais elle est **100 % textuelle** : aucune capture d'écran, aucun schéma.
 Qui découvre le projet ne voit jamais à quoi il ressemble avant de l'avoir installé.
+
+- [x] ~~Une page par jeu pour les trois jeux bêta~~ — [connect4](docs/games/connect4.md),
+      [undercover](docs/games/undercover.md), [rps](docs/games/rps.md), plus la nav, l'index
+      des jeux et la page d'accueil
+- [x] ~~Documenter les réglages de lobby de chaque jeu~~ — ils sont dans chaque page de jeu,
+      et les tableaux périmés du morpion et de Mongolpuri sont à jour
+- [x] ~~Une doc **technique** par jeu~~ — [game-internals.md](docs/development/game-internals.md) :
+      pour chacun des 8 jeux, d'abord ce qu'on personnalise (les paires de mots
+      d'Undercover, le deck d'UNO, la banque du Quiz, la liste de mots de Scribble…),
+      ensuite comment le jeu marche à l'intérieur
 
 ### 🖼️ Captures d'écran — le manque le plus visible
 
 - [ ] Créer `docs/assets/screenshots/` — aujourd'hui `docs/assets/` n'existe même pas
 - [ ] Une capture par jeu, en tête de chaque page de [docs/games/](docs/games/) :
-      morpion, Mongolpuri, UNO, Quiz, Scribble
+      morpion, Mongolpuri, UNO, Quiz, Scribble, Puissance 4, Undercover, P-F-C
 - [ ] Les écrans communs : accueil (choix du jeu), lobby avec réglages, sélecteur
       d'avatar, modale « How to Play », écran de fin / classement
 - [ ] Une capture « héro » en haut de [docs/index.md](docs/index.md) et dans le README
@@ -1258,6 +1519,9 @@ Plusieurs mécaniques du projet ne se racontent bien qu'en schéma.
 | [uno.md](docs/games/uno.md) | Résolution d'un tour : cartes jouables, +2/+4 en chaîne, sens de jeu | `flowchart` |
 | [quiz.md](docs/games/quiz.md) | Récupération opentdb + boucle de retry sur rate-limit | `sequenceDiagram` |
 | [tictactoe.md](docs/games/tictactoe.md) | Bracket de tournoi 3-8 joueurs (`buildTournamentRounds`) | `flowchart` |
+| [undercover.md](docs/games/undercover.md) | Phases : révélation → indices → vote → devinette de Mr White → victoire | `stateDiagram-v2` |
+| [rps.md](docs/games/rps.md) | Un match : deux coups cachés → révélation simultanée → manche suivante | `sequenceDiagram` |
+| [game-internals.md](docs/development/game-internals.md) | Où vivent les données personnalisables des 8 jeux | `flowchart` |
 | [network.md](docs/getting-started/network.md) | Découverte mDNS : hôte → `gamenight.local` → clients du LAN | `flowchart` |
 | [ci-cd.md](docs/development/ci-cd.md) | Pipeline : hooks → `node --check` → matrice Node → build Docker → Trivy → release | `flowchart LR` |
 
@@ -1276,8 +1540,6 @@ Plusieurs mécaniques du projet ne se racontent bien qu'en schéma.
       complexité, internet requis) pour choisir un jeu en 10 secondes
 - [ ] Chaque page de jeu suit le **même gabarit** : capture → le jeu en une phrase →
       joueurs et durée → règles → réglages du lobby → astuces → événements socket
-- [ ] Documenter les réglages de lobby de chaque jeu — ils sont dans le code
-      (`SETTINGS_SCHEMA`) et nulle part dans la doc
 - [ ] Une page **Changelog** alimentée par le `CHANGELOG.md` généré par `cz bump`
       (via `pymdownx.snippets`, déjà actif) plutôt qu'un doublon à maintenir
 - [ ] Traduire la doc ? **Mon avis : pas tout de suite.** Le plugin `i18n` de Material

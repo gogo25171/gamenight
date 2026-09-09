@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Player documentation for the three beta games: Connect Four, Undercover and
+  Rock Paper Scissors, each with rules, settings and notes
+- `docs/development/game-internals.md`: a technical section per game — how to
+  customise it first (Undercover word pairs, Scribble words, the UNO deck, the
+  Quiz question source, board sizes, RPS moves), then how it works inside
+- A `Night time` lobby setting for Mongolpuri, which had a server default but no
+  control to change it
+- Documentation and README sections pointing at the bug-report, feature-request
+  and new-game issue forms
+- Regression tests for each fix below, plus a check that every server setting
+  default has a lobby control and that every beta game is flagged on all three
+  of its surfaces
 - Docker support: multi-stage `Dockerfile` on `node:20-alpine` and a
   `docker-compose.yml` with an `mdns` profile for host networking
 - GitHub Actions CI: syntax checks on Node 18/20/22, tournament test,
@@ -24,10 +36,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pull request templates
 - `TODO.md` listing candidate games and the checklist for adding one
 
-### Changed
+### Removed
 
-- `test-tournament.js` now exits with a non-zero status when a case fails, so CI
-  can detect a regression
+- `test-tournament.js`, superseded by `test/tournament.test.js`, which tests the
+  real bracket functions instead of its own copy of them
+
+### Fixed
+
+- Connect Four and Tic Tac Toe accepted a `new_game` action from any player at
+  any time, so a live board could be wiped mid-game. It is now host-only and only
+  once the current game has finished
+- Undercover was the only beta game with no `BETA` badge inside its own view
 
 ### Security
 
