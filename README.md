@@ -117,7 +117,7 @@ The room creator can tune settings in the lobby before the game starts. Everyone
 | Game | Configurable |
 |------|-------------|
 | 🎨 Scribble | Draw time (40–120 s) · Rounds (2–5) · Word choices per turn (2–4) |
-| 🔪 Mongolpuri | Discussion time · Voting time |
+| 🔪 Mongolpuri | Night time · Discussion time · Voting time |
 | ⭕ Tic Tac Toe | Free play · Best of 3 / 5 / 7 · Board size (3×3 / 4×4 / 5×5) |
 | 🃏 UNO | No configurable settings — standard rules apply |
 | 🧠 Quiz | Questions (10 / 15 / 20 / 25) · Time per question (10 / 15 / 20 / 30 s) |
@@ -196,6 +196,37 @@ gamenight/
 ├── start.sh             # macOS / Linux launcher
 └── package.json
 ```
+
+---
+
+## 📚 Documentation
+
+The full docs are in [`docs/`](docs/) and build with MkDocs:
+
+| Page | What's in it |
+|------|--------------|
+| [Games](docs/games/) | One page per game — rules, settings, tips |
+| [Game internals](docs/development/game-internals.md) | How each game works, and which constant to edit to change its words, cards or timings |
+| [Adding a game](docs/development/adding-a-game.md) | The seven server hooks and the client touch points |
+| [Architecture](docs/development/architecture.md) | The tour: state model, dispatch, timers |
+
+```bash
+pip install -r requirements-docs.txt
+mkdocs serve            # http://localhost:8000
+```
+
+---
+
+## 🐛 Found a bug? Want a game added?
+
+Three short forms, one per kind of report:
+
+- [🐛 Bug report](https://github.com/gogo25171/gamenight/issues/new?template=bug_report.yml) — include the **player count** and the **phase** you were in; that is what makes a bug reproducible here
+- [💡 Feature request](https://github.com/gogo25171/gamenight/issues/new?template=feature_request.yml) — a setting, a variant, a quality-of-life fix
+- [🎲 New game](https://github.com/gogo25171/gamenight/issues/new?template=new_game.yml) — a game you want to see in the list
+
+Feedback on the three `beta` games is the most useful of all: they work, but
+nobody has played them enough to know if they are any *fun*.
 
 ---
 

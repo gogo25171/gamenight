@@ -79,9 +79,13 @@ nav:
       - Quiz: games/quiz.md
       - Tic Tac Toe: games/tictactoe.md
       - Scribble: games/scribble.md
+      - Connect Four: games/connect4.md
+      - Undercover: games/undercover.md
+      - Rock Paper Scissors: games/rps.md
   - Development:
       - Architecture: development/architecture.md
       - Adding a game: development/adding-a-game.md
+      - Game internals: development/game-internals.md
       - Contributing: development/contributing.md
       - CI/CD: development/ci-cd.md
 

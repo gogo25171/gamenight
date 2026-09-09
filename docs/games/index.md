@@ -1,15 +1,28 @@
 # Games
 
-Five games ship with GameNight. Every one of them supports room codes, invite
+Eight games ship with GameNight. Every one of them supports room codes, invite
 links, avatars and reconnecting mid-game.
 
 | | Game | Players | Configurable |
 |--|------|---------|--------------|
-| :knife: | [Mongolpuri](mongolpuri.md) | 4–15 | Discussion time · Voting time |
+| :knife: | [Mongolpuri](mongolpuri.md) | 4–15 | Night time · Discussion time · Voting time |
 | :black_joker: | [UNO](uno.md) | 2+ | — standard rules |
 | :brain: | [Quiz](quiz.md) | 2+ | Questions · Time per question |
-| :o: | [Tic Tac Toe](tictactoe.md) | 2+ | Free play · Best of 3 / 5 / 7 |
+| :o: | [Tic Tac Toe](tictactoe.md) | 2+ | Match format · Board size |
 | :art: | [Scribble](scribble.md) | 3+ | Draw time · Rounds · Word choices |
+| :red_circle: | [Connect Four](connect4.md) :material-flask: | 2+ | Match format · Columns · Rows |
+| :detective: | [Undercover](undercover.md) :material-flask: | 4–12 | Undercovers · Mr White · Clue time · Voting time |
+| :scissors: | [Rock Paper Scissors](rps.md) :material-flask: | 2+ | Match format · Time per throw |
+
+!!! info ":material-flask: Three games are in beta"
+
+    Connect Four, Undercover and Rock Paper Scissors are playable end to end, but
+    their balance and settings are still moving. They carry a `BETA` badge on the
+    home card, in the lobby and in the game itself — nothing else about them
+    behaves differently.
+
+    Found something off in one of them? That is exactly the feedback they need —
+    see [how to report it](#reporting-a-bug-or-suggesting-a-game).
 
 ## Starting a game
 
@@ -21,6 +34,20 @@ links, avatars and reconnecting mid-game.
 4. The host tunes the settings in the lobby. Everyone else sees the current
    configuration but cannot change it.
 5. The host starts when enough players have joined.
+
+## Reporting a bug or suggesting a game
+
+The issue tracker takes three kinds of report, each with its own short form:
+
+| | For |
+|--|-----|
+| :material-bug: [Bug report](https://github.com/gogo25171/gamenight/issues/new?template=bug_report.yml) | Something broke, hung, or showed the wrong thing |
+| :material-lightbulb: [Feature request](https://github.com/gogo25171/gamenight/issues/new?template=feature_request.yml) | A setting, a variant, a quality-of-life fix |
+| :material-dice-multiple: [New game](https://github.com/gogo25171/gamenight/issues/new?template=new_game.yml) | A game you want added |
+
+For a bug, the two details that matter most are **how many players were in the
+room** and **which phase you were in** when it happened — most of what breaks in
+this project breaks with a specific player count, mid-phase.
 
 !!! tip "Names and avatars are unique per room"
 

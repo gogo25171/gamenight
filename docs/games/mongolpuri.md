@@ -50,6 +50,7 @@ check your own role without flashing it at whoever is sitting next to you.
 
 | Setting | Options |
 |---------|---------|
+| Night time | 30 s · **45 s** · 60 s · 90 s |
 | Discussion time | 1 min · 90 s · **2 min** · 2.5 min · 3 min |
 | Voting time | 30 s · 45 s · **60 s** · 90 s |
 

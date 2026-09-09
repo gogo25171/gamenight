@@ -15,9 +15,9 @@ Run one command, share the URL, play instantly.
 
     `docker compose up -d` and you're live.
 
-- :material-gamepad-variant: **[Five games](games/index.md)**
+- :material-gamepad-variant: **[Eight games](games/index.md)**
 
-    Social deduction, cards, trivia, drawing and a classic 1v1.
+    Social deduction, cards, trivia, drawing and three quick 1v1s.
 
 - :material-hammer-wrench: **[Add your own game](development/adding-a-game.md)**
 
@@ -34,6 +34,11 @@ Run one command, share the URL, play instantly.
 | :brain: | [**Quiz**](games/quiz.md) | 2+ | Trivia from the internet — faster answers score more |
 | :o: | [**Tic Tac Toe**](games/tictactoe.md) | 2+ | Classic 1v1 with score tracking and match formats |
 | :art: | [**Scribble**](games/scribble.md) | 3+ | Draw a word while your friends race to guess it |
+| :red_circle: | [**Connect Four**](games/connect4.md) :material-flask: | 2+ | Line up four discs — gravity included |
+| :detective: | [**Undercover**](games/undercover.md) :material-flask: | 4–12 | Everyone gets a word. Almost everyone gets the same one |
+| :scissors: | [**Rock Paper Scissors**](games/rps.md) :material-flask: | 2+ | The playground classic, as a knockout bracket |
+
+:material-flask: = beta. Playable end to end, still finding its balance.
 
 ## Why it exists
 

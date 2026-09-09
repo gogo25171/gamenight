@@ -17,7 +17,13 @@ gamenight/
 │       ├── tictactoe.js     # Tic Tac Toe client UI
 │       ├── scribble.js      # Scribble canvas + chat
 │       ├── uno.js           # UNO client UI
-│       └── quiz.js          # Quiz client UI
+│       ├── quiz.js          # Quiz client UI
+│       ├── connect4.js      # Connect Four client UI
+│       ├── undercover.js    # Undercover client UI
+│       ├── rps.js           # Rock Paper Scissors client UI
+│       ├── i18n.js          # Per-player language switching
+│       └── i18n/            # en.json · fr.json
+├── test/                 # node --test suite, no framework
 ├── docs/                # This site
 ├── Dockerfile
 └── docker-compose.yml
@@ -90,7 +96,9 @@ plugs into:
 | `onPlayerDisconnect()` | Decides what a departure means for the game |
 
 Below those, each game has its own banner-delimited section with `start*`,
-`*Action`, `*Public` and `end*` functions.
+`*Action`, `*Public` and `end*` functions. [Game internals](game-internals.md)
+walks all eight of them — what each one keeps in `gameState`, and which constant
+to edit to change its words, cards or questions.
 
 !!! note "Trust nothing from the client"
 
@@ -114,6 +122,6 @@ mDNS record before exiting.
 
 ## Known debt
 
-`server.js` is over 1 300 lines and holds all five games. Splitting it into
+`server.js` is close to 2 000 lines and holds all eight games. Splitting it into
 `games/<name>.js` modules is on the [roadmap](https://github.com/gogo25171/gamenight/blob/main/TODO.md)
 and should happen before many more games are added.

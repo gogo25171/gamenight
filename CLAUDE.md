@@ -10,9 +10,12 @@ Tic Tac Toe, Scribble, Connect Four, Undercover, Rock Paper Scissors) all live i
 a single `server.js` and are driven over Socket.io. Everything the app renders is
 static files served from `public/`.
 
-The last three ship behind a `BETA` badge — `BETA_GAMES` in
-[app.js](public/js/app.js) is the single list that drives the badge on the home
-card and in the lobby.
+The last three ship behind a `BETA` badge. `BETA_GAMES` in
+[app.js](public/js/app.js) drives the chip in the lobby; the chip on the home card
+and inside each game's own view is markup in
+[index.html](public/index.html) (`class="badge-beta"`). A test in
+[test/lifecycle.test.js](test/lifecycle.test.js) keeps the three surfaces in sync
+with that list.
 
 ## Commands
 
@@ -20,7 +23,7 @@ card and in the lobby.
 npm install
 npm start                  # node server.js  → http://localhost:4000
 npm run dev                # nodemon, restarts on save
-npm test                   # node --test — the suite in test/, ~4 s, no dependencies
+npm test                   # node --test — the suite in test/, ~10 s, no dependencies
 npm run i18n:check         # en.json / fr.json parity and unused-key report
 node --check <file.js>     # syntax check — CI runs this over every .js outside node_modules
 pre-commit run --all-files # full hook suite (pip install pre-commit commitizen; pre-commit install)
@@ -30,7 +33,7 @@ mkdocs build --strict      # docs; pip install -r requirements-docs.txt first
 
 Tests live in [test/](test/) and run on Node's built-in runner — no framework, no
 dependency, in keeping with the rest of the project. `npm test` discovers
-`test/*.test.js` (and the older `test-tournament.js`) from the repo root.
+`test/*.test.js` from the repo root.
 
 They drive the **real** functions: `server.js` ends with a `module.exports` block,
 and its `server.listen` is behind `if (require.main === module)`, so a test can
@@ -48,12 +51,12 @@ Two things to know before writing one:
   by role (`find(p => p.role === 'civilian')`), never by position, or the test
   passes four runs out of five.
 
-`test-tournament.js` at the root predates this and still carries its own copy of
-the bracket functions; [test/tournament.test.js](test/tournament.test.js) covers
-the same ground against the real ones. See TODO.md before touching it.
-
 Manual multiplayer testing is still the norm for anything involving a browser:
 run the server and open several windows against the room code.
+
+When a bug is fixed, add the test that would have caught it — that is the project's
+stated rule, and the reason `SETTINGS_SCHEMA` drift and the `new_game` gate are
+covered by name.
 
 ## Architecture
 
@@ -118,10 +121,18 @@ value the server silently discards.
 
 [docs/development/adding-a-game.md](docs/development/adding-a-game.md) walks the
 seven server hooks and the seven client touch points;
-[TODO.md](TODO.md#L142) has the same checklist with current line numbers. The
-most-forgotten steps are `sendReconnectState()` and the `gameNames` map in
-[app.js:533](public/js/app.js#L533). Verify by hand: mid-game reconnect, a
-player leaving mid-game, play-again, and spectator view.
+[TODO.md](TODO.md) has the same checklist (« Checklist : ajouter un jeu ») with
+current line numbers. The most-forgotten steps are `sendReconnectState()` and the
+`gameKeys` map inside `renderLobby()` in [app.js](public/js/app.js). Verify by
+hand: mid-game reconnect, a player leaving mid-game, play-again, and spectator
+view.
+
+[docs/development/game-internals.md](docs/development/game-internals.md) is the
+per-game technical reference — what each game keeps in `gameState`, and which
+constant to edit to change its words, cards, deck or timings (`UC_WORD_PAIRS`,
+`WORDS`, `buildUnoDeck()`, `fetchQuizQuestions()`, `TTT_WIN_LENGTH`, `C4_NEED`,
+`RPS_BEATS`). Update it alongside any game change, and add a section for a new
+game.
 
 ### Networking
 

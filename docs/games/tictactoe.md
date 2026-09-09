@@ -28,14 +28,21 @@ automatically.
 | Setting | Options |
 |---------|---------|
 | Match format | **Free play** · Best of 3 · Best of 5 · Best of 7 |
+| Board size | **3×3 — align 3** · 4×4 — align 4 · 5×5 — align 4 |
+
+A bigger board keeps the four-in-a-row goal: five in a row on a 5×5 grid is
+almost always a draw.
 
 ## Notes
 
-The bracket logic has its own test. Run it after touching anything in that area:
+The bracket logic has its own test file. Run the suite after touching
+anything in that area:
 
 ```bash
-node test-tournament.js
+npm test
 ```
 
-It simulates player counts from 3 to 8 and fails if any player would never get
-to play a match.
+[`test/tournament.test.js`](https://github.com/gogo25171/gamenight/blob/main/test/tournament.test.js)
+walks player counts from 2 to 16 and fails if a player would never get to play a
+match, if a bye is handed to the wrong seat, or if a bracket ends with more than
+one champion.
