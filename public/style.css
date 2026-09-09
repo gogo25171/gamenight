@@ -1494,6 +1494,10 @@ input[type="range"] { accent-color: var(--accent); width: 100%; cursor: pointer;
 .uc-phase { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
 .uc-phase.active { display: flex; animation: kdPhaseIn 0.3s ease both; }
 
+/* The other two beta games carry the badge in their header; Undercover's layout
+   has no header, so the sidebar names the game instead. */
+.uc-title-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; }
+
 .uc-word { font-size: 1.6rem; font-weight: 900; letter-spacing: .04em; margin: 6px 0; color: var(--accent2); word-break: break-word; }
 
 .uc-player-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; flex: 1; }

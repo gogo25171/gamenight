@@ -199,3 +199,32 @@ test('clearing timers empties the room queue', () => {
   app.clearTimers(room);
   assert.equal(room.timers.length, 0, 'an emptied room must not leave timers running');
 });
+
+// The BETA chip has to appear on all three surfaces the docs promise — home
+// card, lobby, and the game itself. Undercover shipped without the in-game one.
+test('every beta game is flagged on its card and inside its view', () => {
+  const read = f => require('fs').readFileSync(require('path').join(__dirname, '..', 'public', f), 'utf8');
+  const html = read('index.html');
+  const betaSrc = read('js/app.js').match(/const BETA_GAMES = (\[[^\]]*\]);/);
+  assert.ok(betaSrc, 'BETA_GAMES not found in public/js/app.js');
+  const beta = JSON.parse(betaSrc[1].replace(/'/g, '"'));
+
+  // Each view runs from its own id up to the next one — enough to tell whether
+  // the badge sits inside this game's screen or the neighbouring one's.
+  const viewOf = game => {
+    const start = html.indexOf(`id="view-${game}"`);
+    assert.ok(start > 0, `${game} has no view`);
+    const next = html.indexOf('id="view-', start + 1);
+    return html.slice(start, next === -1 ? undefined : next);
+  };
+
+  for (const game of beta) {
+    assert.ok(GAMES.includes(game), `BETA_GAMES lists "${game}", which the server does not know`);
+    const card = html.slice(html.indexOf(`data-game="${game}"`));
+    assert.ok(card.slice(0, 400).includes('card-beta'), `${game} has no BETA chip on its home card`);
+    assert.ok(viewOf(game).includes('badge-beta'), `${game} has no BETA chip inside its view`);
+  }
+  for (const game of GAMES.filter(g => !beta.includes(g))) {
+    assert.ok(!viewOf(game).includes('badge-beta'), `${game} is not in BETA_GAMES but its view shows a BETA chip`);
+  }
+});
