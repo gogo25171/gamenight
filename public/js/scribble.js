@@ -11,12 +11,31 @@ const Scribble = (() => {
   let lastX = 0, lastY = 0;
   let drawBuffer = [];
   let flushTimer = null;
+  // Gestures the drawer could still undo. Counted optimistically as they draw, and
+  // replaced by the server's own count on every redraw, which is the authority.
+  let undoableActions = 0;
+  // The word, but only once this client is entitled to it — the drawer from the
+  // start, a guesser once they get it, everyone at the reveal. It only ever names
+  // the downloaded file, so it must never be set from something we shouldn't know.
+  let knownWord = null;
 
   function init() {
     canvas = document.getElementById('scb-canvas');
     ctx = canvas.getContext('2d');
     setupCanvasEvents();
     setupTools();
+
+    document.getElementById('scb-undo').addEventListener('click', requestUndo);
+    document.getElementById('scb-download').addEventListener('click', downloadDrawing);
+    // Ctrl+Z is what anyone who has ever drawn on a screen will reach for. Ignored
+    // while a text field has focus, so it does not fight the browser's own undo.
+    document.addEventListener('keydown', e => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.shiftKey) return;
+      if (App.gameType !== 'scribble' || !isDrawer) return;
+      if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) return;
+      e.preventDefault();
+      requestUndo();
+    });
 
     document.getElementById('scb-chat-send').addEventListener('click', sendChat);
     document.getElementById('scb-chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
@@ -31,6 +50,7 @@ const Scribble = (() => {
     App.socket.on('scribble:draw_start', onDrawStart);
     App.socket.on('scribble:draw', onRemoteDraw);
     App.socket.on('scribble:clear', () => clearCanvas(false));
+    App.socket.on('scribble:redraw', onRedraw);
     App.socket.on('scribble:hint', ({ masked }) => setWordDisplay(masked));
     App.socket.on('scribble:guess_event', onGuessEvent);
     App.socket.on('scribble:correct_guess', onCorrectGuess);
@@ -98,7 +118,8 @@ const Scribble = (() => {
     if (tool === 'fill') {
       floodFill(Math.round(x), Math.round(y), color);
       const n = normalizeCoords(x, y);
-      App.socket.emit('game:action', { action: 'fill', x: n.nx, y: n.ny, color });
+      App.socket.emit('game:action', { action: 'fill', nx: n.nx, ny: n.ny, color });
+      countAction();
       return;
     }
     isDrawing = true;
@@ -106,6 +127,7 @@ const Scribble = (() => {
     ctx.beginPath();
     ctx.moveTo(x, y);
     drawBuffer.push({ type: 'begin', nx: x / canvas.width, ny: y / canvas.height, color: tool === 'eraser' ? '#ffffff' : color, size: brushSize, tool });
+    countAction();
     scheduleFlush();
   }
 
@@ -143,6 +165,35 @@ const Scribble = (() => {
     drawBuffer = [];
   }
 
+  // ─── Undo ───
+
+  /** Sets how many gestures can still be undone, and the button's state with it. */
+  function setUndoableActions(n) {
+    undoableActions = Math.max(0, n);
+    const btn = document.getElementById('scb-undo');
+    if (btn) btn.disabled = undoableActions === 0;
+  }
+
+  function countAction() { setUndoableActions(undoableActions + 1); }
+
+  function requestUndo() {
+    if (!isDrawer || undoableActions === 0) return;
+    // Send whatever is buffered first, or the server would undo the stroke before
+    // it hears the end of it.
+    flushDrawBuffer();
+    App.socket.emit('game:action', { action: 'undo' });
+  }
+
+  /**
+   * The server removed an action and sent the whole remaining log. A raster canvas
+   * cannot un-draw a line, so the only honest answer is to repaint from scratch.
+   */
+  function onRedraw({ drawingData, actions }) {
+    clearCanvas(false);
+    replayDrawingData(drawingData);
+    setUndoableActions(actions ?? 0);
+  }
+
   // ─── Remote drawing ───
   let remoteCtx = { color: '#000', size: 5, active: false };
 
@@ -173,6 +224,11 @@ const Scribble = (() => {
         floodFill(Math.round(x), Math.round(y), stroke.color);
         break;
       }
+      // Clear is a log entry rather than an emptied log, so that undo can bring
+      // the drawing back — which means a replay has to be able to apply it.
+      case 'clear':
+        clearCanvas(false);
+        break;
     }
   }
 
@@ -219,7 +275,41 @@ const Scribble = (() => {
   function clearCanvas(emit = true) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    if (emit) App.socket.emit('game:action', { action: 'clear' });
+    if (emit) { App.socket.emit('game:action', { action: 'clear' }); countAction(); }
+  }
+
+  // ─── Saving the drawing ───
+
+  /**
+   * The canvas over an opaque white sheet. A canvas nobody has cleared yet is
+   * transparent, and a transparent PNG shows a black drawing on black in most
+   * viewers — so the sheet is not cosmetic.
+   */
+  function drawingAsPng() {
+    const sheet = document.createElement('canvas');
+    sheet.width = canvas.width;
+    sheet.height = canvas.height;
+    const sctx = sheet.getContext('2d');
+    sctx.fillStyle = '#ffffff';
+    sctx.fillRect(0, 0, sheet.width, sheet.height);
+    sctx.drawImage(canvas, 0, 0);
+    return sheet.toDataURL('image/png');
+  }
+
+  /** `gamenight-scribble-ice-cream-2026-09-10-18-04.png`, word included only if known. */
+  function drawingFileName() {
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    const slug = (knownWord || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return `gamenight-scribble${slug ? '-' + slug : ''}-${stamp}.png`;
+  }
+
+  function downloadDrawing() {
+    const link = document.createElement('a');
+    link.href = drawingAsPng();
+    link.download = drawingFileName();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   // ─── Tools ───
@@ -359,6 +449,8 @@ const Scribble = (() => {
   function onStart({ players, maxRounds }) {
     clearCanvas(false);
     hasGuessed = false;
+    setUndoableActions(0);
+    knownWord = null;
     document.getElementById('scb-chat-messages').innerHTML = '';
     document.getElementById('scb-overlay-gameover').classList.add('hidden');
     document.getElementById('scb-overlay-round-end').classList.add('hidden');
@@ -366,7 +458,7 @@ const Scribble = (() => {
     renderPlayers(players, null);
   }
 
-  function onReconnect({ phase, drawerId, scores, drawingData, masked, players, round, maxRounds }) {
+  function onReconnect({ phase, drawerId, scores, drawingData, masked, players, round, maxRounds, actions }) {
     myDrawerId = drawerId;
     setDrawerMode(drawerId === App.myId);
     document.getElementById('scb-round-label').textContent = `Round ${round} / ${maxRounds}`;
@@ -374,11 +466,14 @@ const Scribble = (() => {
     renderPlayers(players, drawerId);
     clearCanvas(false);
     replayDrawingData(drawingData);
+    setUndoableActions(actions ?? 0);
   }
 
   function onTurnStart({ drawerId, drawerName, round, maxRounds, scores, players }) {
     myDrawerId = drawerId;
     hasGuessed = false;
+    setUndoableActions(0);
+    knownWord = null;
     canvas.classList.remove('scb-canvas-urgent');
     clearCanvas(false);
     document.getElementById('scb-chat-messages').innerHTML = '';
@@ -421,6 +516,7 @@ const Scribble = (() => {
   function onDrawStart({ word, masked, duration }) {
     document.getElementById('scb-word-chooser').classList.add('hidden');
     if (word) {
+      knownWord = word;
       document.getElementById('scb-word-display').textContent = `Draw: ${word}`;
     } else {
       setWordDisplay(masked);
@@ -455,6 +551,7 @@ const Scribble = (() => {
 
   function onCorrectGuess({ word, points }) {
     hasGuessed = true;
+    knownWord = word;
     document.getElementById('scb-chat-input').disabled = true;
     const el = document.getElementById('scb-overlay-guessed');
     el.textContent = `🎉 Correct! +${points} points`;
@@ -468,6 +565,8 @@ const Scribble = (() => {
 
   function onRoundEnd({ word, scores, players, allGuessed }) {
     clearInterval(timerInterval);
+    knownWord = word || knownWord;
+    setUndoableActions(0);
     setDrawerMode(false);
     renderPlayers(players, null);
     canvas.classList.remove('scb-canvas-urgent');

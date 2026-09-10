@@ -388,6 +388,9 @@
         <div class="timer-badge">
           <div id="scb-timer" class="timer-display">1:20</div>
         </div>
+        <button class="btn-ghost btn-sm" id="scb-download" data-i18n-title="scb.downloadTitle" title="Save the drawing as a PNG">
+          <span aria-hidden="true">💾</span> <span data-i18n="scb.download">Save</span>
+        </button>
         <button class="btn-exit btn-sm" id="scb-btn-exit" data-i18n-title="common.exitGame" title="Exit Game">🚪</button>
       </div>
 
@@ -430,6 +433,9 @@
           <input type="range" id="scb-size" min="2" max="40" value="5">
           <span id="scb-size-label">5px</span>
         </div>
+        <button id="scb-undo" class="btn-ghost btn-sm" data-i18n-title="scb.undoTitle" title="Undo the last stroke (Ctrl+Z)" disabled>
+          <span aria-hidden="true">↩️</span> <span data-i18n="scb.undo">Undo</span>
+        </button>
         <button id="scb-clear" class="btn-danger btn-sm" data-i18n="scb.clear">Clear</button>
       </div>
     </main>

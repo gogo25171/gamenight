@@ -375,6 +375,36 @@ Each call reveals one random unrevealed letter to everyone who has not guessed
 yet. Note they are **absolute**, not proportional to `drawTime` — on a 40-second
 round the first hint never lands.
 
+**Undo** works in *gestures*, which is the only unit that means anything to a
+person: the log is flat (`begin, point, point…, end`), so removing the last entry
+would rub out one point of a line. `scribbleUndoLast()` walks back to the `begin`
+that opened the stroke, or takes a single `fill` / `clear` entry:
+
+```js
+const SCB_STANDALONE = ['fill', 'clear'];   // one entry = one gesture
+```
+
+Two consequences worth knowing before changing any of it:
+
+- **`clear` is a log entry, not an emptied log.** It used to do
+  `gs.drawingData = []`, which made the drawing unrecoverable — and an accidental
+  Clear is exactly when undo matters. Replay therefore has to apply it, which is
+  the `case 'clear'` in the client's `onRemoteDraw()`.
+- **Undo repaints everyone, the drawer included.** A raster canvas cannot un-draw
+  a line, so the server sends the whole remaining log as `scribble:redraw` with
+  `io.to(room)` — not `socket.to(room)`. That is one full log per undo; fine on a
+  LAN, and the only way to keep every canvas in the room identical.
+
+`scribbleActionCount()` rides along on the redraw and on the reconnect payload,
+so the drawer's Undo button greys out at the right moment even after a refresh.
+
+**Saving the drawing** is client-only: `drawingAsPng()` composites the canvas onto
+a white sheet before `toDataURL()`, because a canvas nobody has cleared yet is
+transparent and a transparent PNG reads as black-on-black in most viewers. The
+file name carries the word only when that client already knows it — `knownWord` is
+set from the drawer's `draw_start`, a correct guess, or the reveal, never from a
+payload the client is not supposed to have.
+
 **The scoring curve** is in `handleChat()`, since a guess arrives as a chat
 message:
 

@@ -37,11 +37,17 @@ function makeRoom(gameType, n, settings = {}) {
 /** A stand-in for a connected socket. Everything it is sent is recorded. */
 function sock(id) {
   const sent = [];
+  const relayed = [];
   return {
     id,
     sent,
     emit(ev, payload) { sent.push({ ev, payload }); },
     received(ev) { return sent.filter(m => m.ev === ev).map(m => m.payload); },
+    // `socket.to(room)` is "everyone but me" — Scribble relays strokes that way so
+    // the drawer is not sent back what they just drew.
+    relayed,
+    to(target) { return { emit(ev, payload) { relayed.push({ target, ev, payload }); } }; },
+    relayedTo(ev) { return relayed.filter(m => m.ev === ev).map(m => m.payload); },
   };
 }
 

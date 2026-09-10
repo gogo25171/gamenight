@@ -706,6 +706,9 @@ input[type="range"] { accent-color: var(--accent); width: 100%; cursor: pointer;
 .color-dot.active { border-color: #fff; }
 #scb-size { width: 80px; }
 #scb-size-label { font-size: 0.8rem; color: var(--muted); width: 30px; }
+/* Undo greys out with nothing to undo — the project has no global :disabled rule. */
+#scb-undo:disabled { opacity: .4; cursor: default; border-color: var(--border); color: var(--muted); }
+#scb-undo:disabled:hover { border-color: var(--border); color: var(--muted); }
 
 .scribble-chat { width: 220px; flex-shrink: 0; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
 .scribble-chat .chat-messages { flex: 1; max-height: none; }

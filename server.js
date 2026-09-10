@@ -305,6 +305,8 @@ function sendReconnectState(room, socket) {
         phase: gs.phase, drawerId: gs.drawerOrder[gs.drawerIndex],
         scores: gs.scores, drawingData: gs.drawingData, masked: gs.masked,
         players: scribblePlayers(room), round: gs.round, maxRounds: gs.maxRounds,
+        // So a drawer who refreshed gets their Undo button back in the right state.
+        actions: scribbleActionCount(gs.drawingData),
       });
       break;
     case 'uno':
@@ -1054,22 +1056,62 @@ function endScribbleGame(room) {
   io.to(room.code).emit('scribble:game_over', { scores:gs.scores, players:ranked, winner:ranked[0] });
 }
 
+// One "action" is one gesture: a pencil stroke is `begin … point … end`, while a
+// fill or a clear is a single entry standing alone. Undo works in those units,
+// not in points — nobody means "one pixel of that line" by « annuler ».
+const SCB_STANDALONE = ['fill', 'clear'];
+
+/** `drawingData` with its last action removed, or `null` when there is none. */
+function scribbleUndoLast(drawingData) {
+  if (!drawingData?.length) return null;
+  const last = drawingData[drawingData.length - 1];
+  if (SCB_STANDALONE.includes(last.type)) return drawingData.slice(0, -1);
+  // Walk back to the `begin` that opened this stroke. An unfinished stroke (no
+  // `end` yet, because the drawer is still moving) undoes the same way.
+  for (let i = drawingData.length - 1; i >= 0; i--) {
+    if (drawingData[i].type === 'begin') return drawingData.slice(0, i);
+  }
+  return null; // points with no `begin` — refuse rather than guess at the boundary
+}
+
+/** How many gestures are left to undo. Drives the button's disabled state. */
+function scribbleActionCount(drawingData) {
+  return (drawingData || []).filter(s => s.type === 'begin' || SCB_STANDALONE.includes(s.type)).length;
+}
+
 function scribbleAction(room, socket, data) {
   const gs = room.gameState; if (!gs) return;
   const drawerId = gs.drawerOrder[gs.drawerIndex];
+  const isDrawing = socket.id === drawerId && gs.phase === 'drawing';
   switch (data.action) {
     case 'choose_word':
       if (socket.id===drawerId&&gs.phase==='choosing') { clearTimers(room); scribbleWordChosen(room,drawerId,data.word); } break;
     case 'draw':
-      if (socket.id!==drawerId||gs.phase!=='drawing') return;
+      if (!isDrawing) return;
       gs.drawingData.push(data.stroke); socket.to(room.code).emit('scribble:draw',{stroke:data.stroke}); break;
     case 'clear':
-      if (socket.id!==drawerId||gs.phase!=='drawing') return;
-      gs.drawingData=[]; io.to(room.code).emit('scribble:clear'); break;
+      if (!isDrawing) return;
+      // A marker rather than an emptied log: an accidental Clear is exactly when
+      // undo matters most, and it can only bring the drawing back if it is one
+      // more entry rather than the loss of all of them.
+      gs.drawingData.push({type:'clear'});
+      io.to(room.code).emit('scribble:clear'); break;
     case 'fill':
-      if (socket.id!==drawerId||gs.phase!=='drawing') return;
-      gs.drawingData.push({type:'fill',x:data.x,y:data.y,color:data.color});
-      socket.to(room.code).emit('scribble:draw',{stroke:{type:'fill',x:data.x,y:data.y,color:data.color}}); break;
+      if (!isDrawing) return;
+      gs.drawingData.push({type:'fill',nx:data.nx,ny:data.ny,color:data.color});
+      socket.to(room.code).emit('scribble:draw',{stroke:{type:'fill',nx:data.nx,ny:data.ny,color:data.color}}); break;
+    case 'undo': {
+      if (!isDrawing) return;
+      const undone = scribbleUndoLast(gs.drawingData);
+      if (!undone) return;
+      gs.drawingData = undone;
+      // A raster canvas cannot un-draw a line, so everyone repaints from the log
+      // — the drawer included, which is why this is `io.to` and not `socket.to`.
+      io.to(room.code).emit('scribble:redraw', {
+        drawingData: gs.drawingData, actions: scribbleActionCount(gs.drawingData),
+      });
+      break;
+    }
   }
 }
 
@@ -2014,7 +2056,7 @@ module.exports = {
   unoPlayCard, unoPublic,
   // scribble
   WORDS, maskWord, randWords, startScribble, scribbleStartTurn, scribbleWordChosen,
-  scribblePlayers,
+  scribblePlayers, scribbleUndoLast, scribbleActionCount,
   // quiz
   startQuiz, quizPublic, QUIZ_LOCAL_BANK, quizBuildQuestion, quizLocalQuestions, loadQuizQuestions,
 };

@@ -40,6 +40,30 @@ cannot spoil it for the others.
 | Rounds | 2–5 |
 | Word choices per turn | 2–4 |
 
+## The drawer's tools
+
+Pencil, eraser, fill, a colour, a brush size — and two buttons worth calling out:
+
+| | What it does |
+|--|--------------|
+| **↩️ Undo** | Removes the **last gesture**, not the last pixel: one whole pencil stroke, one fill, or one Clear. `Ctrl+Z` does the same. Greyed out when there is nothing left to undo. |
+| **🗑️ Clear** | Wipes the canvas — and is itself undoable, so hitting it by accident is not the end of the drawing. |
+
+Undo is the drawer's alone, and only while they are drawing: nobody can rub out
+someone else's work, and the drawing stops being editable at the reveal.
+
+## Saving a drawing
+
+**💾 Save**, in the bar above the canvas, downloads the drawing as a PNG. It is
+there for **everyone**, not just the drawer — the good ones are usually worth
+keeping, and the guessers are the ones laughing at them.
+
+The file is named after the word once you are entitled to know it
+(`gamenight-scribble-ice-cream-2026-09-10-18-04.png`); before that — a guesser
+mid-round — the word is left out rather than leaked through a file name. The best
+moment to save is the round-end reveal, when the drawing is still on screen and
+everyone knows what it was.
+
 ## Notes
 
 - The canvas has a fill tool and a clear button, both drawer-only.
