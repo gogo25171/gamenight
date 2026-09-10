@@ -70,7 +70,11 @@ const App = {
 
 // Games still finding their balance. The flag drives the BETA chip on the home
 // card and in the lobby — the game itself behaves like any other.
-const BETA_GAMES = ['connect4', 'undercover', 'rps'];
+// Scribble and the Quiz joined the list when their behaviour changed under them:
+// the Quiz can now answer from a bundled bank when opentdb.com is out of reach,
+// and Scribble's pointer mapping was rewritten. Both want a party's worth of
+// real play before the badge comes off.
+const BETA_GAMES = ['connect4', 'undercover', 'rps', 'scribble', 'quiz'];
 
 // ═══════════════════ SETTINGS SCHEMA (client-side) ═══════════════════
 // Labels and option labels are i18n keys, resolved at render time so a language

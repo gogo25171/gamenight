@@ -7,19 +7,23 @@ links, avatars and reconnecting mid-game.
 |--|------|---------|--------------|
 | :knife: | [Mongolpuri](mongolpuri.md) | 4–15 | Night time · Discussion time · Voting time |
 | :black_joker: | [UNO](uno.md) | 2+ | — standard rules |
-| :brain: | [Quiz](quiz.md) | 2+ | Questions · Time per question |
+| :brain: | [Quiz](quiz.md) :material-flask: | 2+ | Questions · Time per question |
 | :o: | [Tic Tac Toe](tictactoe.md) | 2+ | Match format · Board size |
-| :art: | [Scribble](scribble.md) | 3+ | Draw time · Rounds · Word choices |
+| :art: | [Scribble](scribble.md) :material-flask: | 3+ | Draw time · Rounds · Word choices |
 | :red_circle: | [Connect Four](connect4.md) :material-flask: | 2+ | Match format · Columns · Rows |
 | :detective: | [Undercover](undercover.md) :material-flask: | 4–12 | Undercovers · Mr White · Clue time · Voting time |
 | :scissors: | [Rock Paper Scissors](rps.md) :material-flask: | 2+ | Match format · Time per throw |
 
-!!! info ":material-flask: Three games are in beta"
+!!! info ":material-flask: Five games are in beta"
 
     Connect Four, Undercover and Rock Paper Scissors are playable end to end, but
-    their balance and settings are still moving. They carry a `BETA` badge on the
-    home card, in the lobby and in the game itself — nothing else about them
-    behaves differently.
+    their balance and settings are still moving. Scribble and the Quiz joined them
+    when their behaviour changed underneath: the Quiz now falls back to a bundled
+    question bank when it cannot reach the internet, and Scribble's pointer
+    mapping was rewritten to fix ink landing beside the cursor.
+
+    All five carry a `BETA` badge on the home card, in the lobby and in the game
+    itself — nothing else about them behaves differently.
 
     Found something off in one of them? That is exactly the feedback they need —
     see [how to report it](#reporting-a-bug-or-suggesting-a-game).

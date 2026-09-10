@@ -169,11 +169,16 @@ actions emitted back through `App.socket`.
    `BETA` chip in the lobby:
 
     ```js
-    const BETA_GAMES = ['connect4', 'undercover', 'rps'];
+    const BETA_GAMES = ['connect4', 'undercover', 'rps', 'scribble', 'quiz'];
     ```
 
     The chip on the home card and in the game's own view is markup:
     `<span class="badge-beta card-beta" data-i18n="common.beta">BETA</span>`.
+    `test/lifecycle.test.js` keeps all three surfaces in sync with that list, so a
+    game added to it and nowhere else fails `npm test`.
+
+    The list is not only for new games: an existing game whose behaviour changes
+    under players goes back in it until a party has confirmed the change.
 
 ### `public/js/i18n/en.json` and `fr.json`
 

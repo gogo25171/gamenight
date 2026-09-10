@@ -1,6 +1,14 @@
 # :art: Scribble
 
-**3+ players — draw and guess.**
+**3+ players — draw and guess.** :material-flask: Beta
+
+!!! warning "This game is in beta"
+
+    The canvas pointer mapping was rewritten — the drawer's ink used to land
+    beside the cursor, further off the closer to an edge you drew. The fix needs a
+    party's worth of play across phones, tablets and desktops before the badge
+    comes off. A `BETA` badge shows on the home card, in the lobby and in the
+    game itself.
 
 One player draws a secret word on a shared canvas while everyone else races to
 type it in the chat.
@@ -35,5 +43,9 @@ cannot spoil it for the others.
 ## Notes
 
 - The canvas has a fill tool and a clear button, both drawer-only.
+- The canvas is 800×500 pixels whatever the size of your screen: strokes are sent
+  as fractions of it, so everyone sees the same drawing. On a window whose shape
+  does not match, the drawing is centred with a blank margin — clicking that
+  margin does nothing, by design.
 - The full drawing is replayed to anyone who refreshes mid-turn.
 - If the drawer leaves, the turn ends and play moves on.

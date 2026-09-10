@@ -31,9 +31,9 @@ Run one command, share the URL, play instantly.
 |--|------|---------|------|
 | :knife: | [**Mongolpuri**](games/mongolpuri.md) | 4–15 | Social deduction — lies, trust, and midnight murder |
 | :black_joker: | [**UNO**](games/uno.md) | 2+ | Classic card game with skips, reverses and wild cards |
-| :brain: | [**Quiz**](games/quiz.md) | 2+ | Trivia from the internet — faster answers score more |
+| :brain: | [**Quiz**](games/quiz.md) :material-flask: | 2+ | Trivia, online or from the bundled bank — faster answers score more |
 | :o: | [**Tic Tac Toe**](games/tictactoe.md) | 2+ | Classic 1v1 with score tracking and match formats |
-| :art: | [**Scribble**](games/scribble.md) | 3+ | Draw a word while your friends race to guess it |
+| :art: | [**Scribble**](games/scribble.md) :material-flask: | 3+ | Draw a word while your friends race to guess it |
 | :red_circle: | [**Connect Four**](games/connect4.md) :material-flask: | 2+ | Line up four discs — gravity included |
 | :detective: | [**Undercover**](games/undercover.md) :material-flask: | 4–12 | Everyone gets a word. Almost everyone gets the same one |
 | :scissors: | [**Rock Paper Scissors**](games/rps.md) :material-flask: | 2+ | The playground classic, as a knockout bracket |
