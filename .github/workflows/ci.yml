@@ -168,4 +168,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
+
+      # The suite runs as a pre-commit hook, and it requires the real server.js —
+      # so it needs express and socket.io present. Without this the whole hook
+      # fails with "Cannot find module 'express'" on every test file at once.
+      - run: npm ci
+
       - uses: pre-commit/action@v3.0.1
