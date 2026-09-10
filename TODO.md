@@ -52,6 +52,7 @@ Un seul à la fois. Mon ordre :
 |----------|-------------------|
 | [Tests plus fins](#-tests--arrêter-de-découvrir-les-régressions-en-soirée) | Mongolpuri de bout en bout, UNO au niveau du tour, scoring. La base est là ; ceci est du raffinement |
 | [Variantes de jeux](#-variantes-de-jeux--à-réfléchir) | Beaucoup de plaisir pour peu de code — souvent un seul réglage |
+| [Jeux pour un stream ou un bilan de sprint](#-jeux-pour-un-stream-un-bilan-de-sprint-une-réunion-déquipe) | Un usage entier que rien ne couvre. Surtout du cadrage (durée plafonnée, vue spectateur, mode animateur) plutôt que des jeux neufs |
 | [Numéro de version par jeu](#-numéro-de-version-par-jeu) | Devient utile le jour où les retours des joueurs arrivent |
 | [Retours des joueurs](#-espace-de-commentaires--retours-des-joueurs) | Les formulaires GitHub sont en place et mis en avant ; le formulaire **dans l'app** reste à faire, et il ne vaut que s'il y a des joueurs autres que soi |
 | ~~[Configuration `.env`](#-configuration-par-fichier-env)~~ | ✅ **premier étage fait** — `config.js`, `.env.example`, 6 variables. Reste le durcissement `GAMENIGHT_MODE=public` + `ACCESS_CODE`, qui dépend de l'anti-triche |
@@ -422,6 +423,72 @@ réglage que le serveur jette en silence.
    joueurs et des spectateurs pour la v1, bracket seulement si l'envie vient.
 4. **Sortie en bêta**, comme les trois derniers jeux : badge `BETA`, puis retrait du
    badge après quelques soirées sans bug.
+
+---
+
+## 📺 Jeux pour un stream, un bilan de sprint, une réunion d'équipe
+
+Un contexte que GameNight ne couvre pas encore, et qui n'est **pas** la soirée
+entre amis. Trois usages proches mais distincts :
+
+| Usage | Ce qui change | Contrainte dominante |
+|-------|---------------|----------------------|
+| **Stream / live** | Un animateur devant un public qui regarde sans jouer | Il faut une **vue spectateur lisible à distance** : gros texte, pas de secret à l'écran, et l'animateur ne doit pas montrer son propre écran de joueur |
+| **Bilan de sprint / rétro** | 15-30 min, en visio, tout le monde a son laptop | **Zéro installation, zéro compte, et ça se termine à l'heure.** Un jeu qui dure « jusqu'à ce que quelqu'un gagne » est inutilisable |
+| **Icebreaker / nouvelle arrivée** | 5-10 min, des gens qui ne se connaissent pas | Aucune règle à apprendre. Si l'explication dépasse deux phrases, c'est raté |
+
+> 💬 **Pourquoi c'est intéressant :** ces trois usages demandent surtout du
+> **cadrage**, pas des jeux neufs. Undercover et Mongolpuri sont déjà de très bons
+> jeux de rétro — il leur manque un mode « 20 minutes maximum » et des mots de
+> métier. C'est beaucoup moins de code qu'un jeu de plus.
+
+### 🎯 Ce que les jeux existants demandent pour y servir
+
+- [ ] **Un plafond de durée**, réglage de salon (`timeBudget`, off par défaut) : à
+      l'échéance, la partie se termine proprement au score courant au lieu d'être
+      coupée. Concerne surtout Undercover, Mongolpuri et Scribble, les trois qui
+      peuvent s'étirer
+- [ ] **Une vraie vue spectateur**, distincte du mode spectateur actuel (qui est
+      « joueur éliminé ») : projetable, gros caractères, aucun secret, et un lien
+      dédié depuis le lobby. C'est la brique commune aux trois usages
+- [ ] **Des banques de mots « métier »** pour Scribble et Undercover — les paires
+      d'Undercover s'y prêtent particulièrement (`Sprint`/`Marathon`,
+      `Bug`/`Feature`, `Rétro`/`Bilan`). Dépend du réglage `contentLanguage` de la
+      section i18n : le contenu est partagé par le salon
+- [ ] **Un mode « animateur »** : un hôte qui pilote sans jouer, ne compte pas dans
+      `minPlayers()` et ne reçoit aucun rôle. Undercover et Mongolpuri en profitent
+      immédiatement, et c'est ce qui rend le stream possible
+- [ ] **Un récapitulatif partageable en fin de partie** — le tableau des scores en
+      image, comme le 💾 de Scribble. Ce qu'on colle dans le canal d'équipe après la
+      rétro
+
+### 🆕 Jeux qui n'existent pas encore et qui visent précisément ça
+
+Aucun n'est engagé : cette liste est là pour que tu ajoutes les tiens.
+
+| Jeu | Joueurs | Durée | Pourquoi il colle à l'usage | Coût |
+|-----|---------|-------|------------------------------|------|
+| **Deux vérités, un mensonge** | 3+ | 10 min | L'icebreaker par défaut, et il n'y a presque rien à coder : saisie de trois phrases, vote, révélation. Réutilise la boucle de vote d'Undercover | ⭐ Faible |
+| **Échelle d'accord** (« sondage à l'aveugle ») | 3+ | 5 min | Une affirmation, chacun place un curseur 1-10 **en aveugle**, révélation simultanée. En rétro, ça vaut mieux qu'un tour de table : personne ne s'aligne sur le premier qui parle | ⭐ Faible — et sans doute le meilleur rapport utilité / code de la liste |
+| **Qui a écrit ça ?** | 4+ | 15 min | Chacun répond anonymement à une question, on devine qui a écrit quoi. Moteur = saisie + appariement + score | ⭐⭐ Moyen |
+| **Blind test emoji / Quiz Photo** | 2+ | 10 min | Déjà noté plus haut : le moteur `quiz` est complet, seule la banque change. En équipe, une banque « culture interne » est imbattable | ⭐ Faible *(voir « Jeux à ajouter »)* |
+| **Quiplash-like** (réponses drôles + vote) | 3+ | 20 min | Le meilleur jeu de stream de la liste, et de loin le plus lourd : modération, appariement, plusieurs manches. Déjà classé « ambitieux » en P3 | ⭐⭐⭐⭐ Élevé |
+
+### ⚠️ Ce qui devient un problème dans ce contexte, et pas en soirée
+
+- [ ] **Le chat n'est pas modéré.** En soirée entre amis, personne ne s'en soucie.
+      En stream ou au travail, un message déplacé reste affiché. Au minimum : pouvoir
+      couper le chat par réglage de salon
+- [ ] **Le lien d'invitation est le seul contrôle d'accès.** Un code de salon à 6
+      lettres partagé à l'écran pendant un live est une invitation ouverte. Dépend
+      directement de [l'anti-triche](#-anti-triche-anti-bot-anti-abus) et du mode
+      `GAMENIGHT_MODE=public`
+- [ ] **Les pseudos sont libres.** Acceptable entre amis ; à encadrer si l'usage
+      devient professionnel
+- [ ] **Personne n'est sur le même réseau.** Une rétro se fait en visio : le modèle
+      « LAN de confiance » ne tient plus. C'est le même arbitrage que la section
+      `.env`, et la réponse reste **un VPN ou un reverse proxy authentifié**, pas une
+      exposition directe
 
 ---
 
