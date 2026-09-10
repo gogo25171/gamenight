@@ -125,6 +125,106 @@ Classés par effort d'implémentation. « Réutilise » = infra déjà en place 
 | **Uno Flip / Uno extensions** | 2+ | Cartes Flip, +4 en chaîne, règles maison configurables. | Options de règles dans les settings d'UNO |
 | **Skribbl multi-langue** | 3+ | Banque de mots FR/EN/ES sélectionnable en lobby. | Fichiers de mots + setting `language` |
 
+### 🌐 Repérage : les jeux en ligne les plus joués qui manquent ici (10/09/2026)
+
+Passe sur les palmarès de jeux de navigateur et de jeux de soirée. Les titres qui
+reviennent partout sont **Gartic Phone, skribbl.io, Codenames, JKLM.FUN, Board Game
+Arena, Lichess, TETR.IO**, et une famille de jeux d'action `.io` (Bonk.io, HaxBall,
+Shell Shockers, Smash Karts). Sur ce lot, skribbl.io **est** Scribble, et Gartic
+Phone comme Codenames sont déjà listés plus haut.
+
+Ne restent donc ci-dessous que les **absents** de ce fichier.
+
+#### 🟢 Le meilleur rapport notoriété / code
+
+| Jeu | Joueurs | Principe | Réutilise |
+|-----|---------|----------|-----------|
+| **Petit Bac / Scattergories** | 2+ | Une lettre, des catégories (animal, ville, métier…), tout le monde écrit en même temps ; les réponses en double sont annulées. | Soumission simultanée + comparaison de textes, exactement comme **Just One**. Et **aucun dictionnaire** : c'est la table qui valide, par vote. Le plus rentable de toute la liste |
+| **Le Pendu** | 2+ | Un joueur choisit un mot, les autres proposent des lettres. | `WORDS` et `maskWord()` de Scribble font déjà **tout le travail** de masquage. Une soirée de code, littéralement |
+| **Fibbage** *(mensonge plausible)* | 3+ | Une vraie question de culture à trou ; chacun invente une réponse crédible ; on vote. Points pour avoir trompé les autres **et** pour avoir trouvé le vrai. | Moteur `quiz` pour les questions + le cycle soumission/vote. La meilleure façon de rendre le Quiz drôle plutôt que scolaire |
+| **Bingo** | 2+ (et bien plus) | Grilles distribuées, tirage annoncé, premier à compléter. | Rien de neuf, et **le seul jeu de la liste qui monte à 30 joueurs** — donc le candidat naturel de la [section stream](#-jeux-pour-un-stream-un-bilan-de-sprint-une-réunion-déquipe) |
+| **Memory / Jeu des paires** | 2+ | Grille de cartes face cachée, retourner deux cartes identiques. | Grille cliquable + tour par tour, comme Puissance 4. Le plus simple à faire jouer aux enfants |
+| **Othello / Reversi** | 2 | Encadrer les pions adverses pour les retourner. | Même plateau et même boucle que `tictactoe` / `connect4`. Un bot du [palier 🟢](#-bots--compléter-une-table-ou-jouer-tout-seul) marcherait tel quel |
+
+#### 🟡 Excellents, mais ils imposent un dictionnaire
+
+| Jeu | Joueurs | Principe | Le vrai coût |
+|-----|---------|----------|--------------|
+| **BombParty** *(le jeu phare de [JKLM.FUN](https://jklm.fun/))* | 2–16 | Un fragment de lettres (`TRA`), il faut taper un mot qui le contient avant que la bombe explose. Chronomètre initial aléatoire (~10-30 s), minimum ~5 s après chaque mot validé, et un système de vies. | **Il faut valider des mots**, donc embarquer un dictionnaire |
+| **Boggle / Serpentine** | 2+ | Grille de lettres, tout le monde cherche des mots en simultané pendant un temps donné. | Idem, plus une recherche de chemin dans la grille |
+
+> ⚠️ **La question à trancher avant ces deux-là, et elle n'est pas dans le jeu :**
+> un dictionnaire français utilisable fait des centaines de milliers de mots. Ça
+> veut dire un fichier de données d'un tout autre ordre que
+> `data/quiz-questions.json` (quelques kilo-octets) — plusieurs mégaoctets, à
+> charger en mémoire au démarrage, dans une image Docker qui se veut légère, et
+> **un par langue**. C'est le premier vrai choix d'infrastructure de données du
+> projet. Le trancher une fois sert aux deux jeux.
+>
+> 💬 **Mon avis :** garder BombParty pour *après* le Petit Bac. Le Petit Bac donne
+> le même plaisir de « écrire vite sous pression », sans dictionnaire, parce que
+> c'est la table qui arbitre — et une table qui rigole arbitre mieux qu'un fichier.
+
+#### 🟡 Déduction sociale — le terrain où le projet est déjà bon
+
+Mongolpuri et Undercover sont en place ; ces quatre-là réutilisent leur boucle
+(rôles secrets, tour de parole, vote, révélation) et n'en sont pas des doublons.
+
+| Jeu | Joueurs | Ce qui le distingue d'Undercover |
+|-----|---------|----------------------------------|
+| **Spyfall** | 3+ | Tout le monde reçoit un **lieu**, sauf l'espion. On s'interroge librement, deux par deux. L'espion doit deviner le lieu, les autres le démasquer. La différence est le format : des **questions ouvertes** au lieu d'un indice d'un mot |
+| **Werewords** | 4+ | Un « 20 questions » où le groupe doit trouver un mot en questions fermées, avec un loup-garou qui sait le mot et sabote |
+| **Insider** | 4+ | Même idée : un Maître connaît le mot, le groupe questionne, et un Insider oriente discrètement vers la réponse. Puis on vote pour le trouver |
+| **Decrypto** | 4+ | Deux équipes, des mots-codes, on transmet des indices numériques que l'adversaire tente d'intercepter. Demande la **gestion d'équipes**, comme Codenames |
+
+#### 🟠 Ils apportent un mécanisme que le projet n'a pas du tout
+
+| Jeu | Joueurs | Le mécanisme neuf |
+|-----|---------|-------------------|
+| **Yams / Yahtzee** | 1+ | **Les dés** : lancer, garder, relancer, et une feuille de score à cases. Aucun jeu du projet n'a de hasard relançable, et la feuille de score est une vraie UI |
+| **Dominos** | 2–4 | Une main + deux extrémités ouvertes. Proche d'UNO, mais la pose se fait **des deux côtés**, ce que le moteur d'UNO ne sait pas faire |
+
+#### 🔴 Hors périmètre, et il faut l'écrire une fois pour toutes
+
+Les jeux `.io` d'action — **Bonk.io, HaxBall, Shell Shockers, Smash Karts, TETR.IO,
+Agar.io, slither.io** — sont, en volume, les vrais champions du multijoueur par
+navigateur. Ils ne sont pas pour ce projet, et ce n'est pas une question d'effort :
+
+- Ils demandent une **boucle de simulation à 30-60 Hz**, avec prédiction côté
+  client, interpolation et réconciliation. GameNight est **événementiel et au tour
+  par tour** : un `game:action` arrive, l'état change, on diffuse. C'est une autre
+  architecture, pas un jeu de plus
+- Ils se jouent **au clavier en continu**, pas au doigt sur un téléphone posé sur
+  la table — l'inverse du public visé
+- Une manche dure 1 à 2 minutes et s'enchaîne sans fin, là où tout le projet est
+  bâti sur « une partie, un salon, un gagnant »
+
+> 💬 **Mon avis :** dire non explicitement vaut mieux que laisser la question
+> ouverte. Le seul emprunt qui vaudrait le coup est **TETR.IO en versus** — mais
+> même lui suppose une boucle temps réel, donc c'est le même non.
+
+**Lichess et Board Game Arena** ne sont pas des jeux mais des **plateformes** : ils
+relèvent de la [section plateforme](#-plateforme--mini-jeux-installables-marketplace-gros-jeux),
+et l'échecs est un domaine où Lichess est si dominant que le refaire ici n'apporte
+rien à une soirée.
+
+#### 📋 Si je devais n'en garder que trois
+
+1. **Petit Bac** — sans dictionnaire, une soirée de code, et ça marche à n'importe
+   quel nombre de joueurs. Le meilleur ajout possible du fichier entier
+2. **Le Pendu** — `maskWord()` et `WORDS` existent déjà ; c'est presque de
+   l'assemblage, et c'est le jeu que tout le monde comprend sans explication
+3. **Fibbage** — transforme le Quiz déjà livré en jeu de soirée plutôt qu'en
+   interrogation écrite, pour un cycle soumission/vote qu'Undercover a déjà
+
+*Sources du repérage :* [GameBuddies](https://gamebuddies.io/blog/best-browser-games-to-play-with-friends) ·
+[Gaming Couch](https://gamingcouch.com/blog/best-free-online-party-games-browser) ·
+[Winro Games](https://winrogames.com/blog/guides/best-browser-multiplayer-games-with-friends) ·
+[JKLM.FUN](https://jklm.fun/faq/) ·
+[TheGamer — Jackbox](https://www.thegamer.com/jackbox-trivia-best-mini-games-ranked/) ·
+[Games like Spyfall](https://gameslikethisone.com/games-like-spyfall/) ·
+[Games like Codenames](https://gamenightmastery.com/games-like-code-names/)
+
 ### ⭐ Priorité suggérée
 
 1. ~~**Puissance 4**~~ — ✅ livré (bêta).
@@ -132,9 +232,11 @@ Classés par effort d'implémentation. « Réutilise » = infra déjà en place 
 3. ~~**Pierre-Feuille-Ciseaux tournoi**~~ — ✅ livré (bêta).
 4. **Bataille Navale** — la seule vraie nouveauté de moteur du lot : une phase de
    placement. Plan détaillé plus bas.
-5. **Gartic Phone** — gros potentiel de fous rires, et le canevas de Scribble est déjà écrit.
-6. **Cartes contre l'humanité (SFW)** — fort effet de groupe, moteur simple.
-7. **Quiz emoji local** — supprime la dépendance internet du Quiz.
+5. **Petit Bac** — le meilleur rapport plaisir / code du fichier, et sans dictionnaire (voir le repérage ci-dessus).
+6. **Gartic Phone** — gros potentiel de fous rires, et le canevas de Scribble est déjà écrit.
+7. **Le Pendu** — presque de l'assemblage : `WORDS` et `maskWord()` sont déjà là.
+8. **Cartes contre l'humanité (SFW)** — fort effet de groupe, moteur simple.
+9. **Quiz emoji local** — le Quiz ne dépend plus d'internet, mais une banque d'emojis reste à écrire.
 
 ---
 
