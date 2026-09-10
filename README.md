@@ -32,21 +32,25 @@ Run one command → share the URL → play instantly.
 |--|------|---------|------|
 | 🔪 | **Mongolpuri** | 4–15 | Social deduction — lies, trust, and midnight murder |
 | 🃏 | **UNO** | 2+ | Classic card game with skips, reverses, and wild cards |
-| 🧠 | **Quiz** | 2+ | 15-question trivia from the internet — faster answers score more |
+| 🧠 | **Quiz** `beta` | 2+ | 15-question trivia, online or offline — faster answers score more |
 | ⭕ | **Tic Tac Toe** | 2+ | Classic 1v1 with score tracking and match formats |
-| 🎨 | **Scribble** | 3+ | Draw a word while your friends race to guess it |
+| 🎨 | **Scribble** `beta` | 3+ | Draw a word while your friends race to guess it |
 | 🔴 | **Connect Four** `beta` | 2+ | Drop discs, line up four, best-of matches |
 | 🕵️ | **Undercover** `beta` | 4–12 | Everyone shares a word — one or two players do not |
 | ✂️ | **Rock Paper Scissors** `beta` | 2+ | Knockout bracket of simultaneous throws |
 
-Games marked `beta` are playable end to end but still being balanced — they carry a
-**BETA** badge on the home card, in the lobby and in the game header.
+Games marked `beta` are playable end to end but still settling — they carry a
+**BETA** badge on the home card, in the lobby and in the game header. Connect Four,
+Undercover and Rock Paper Scissors are there because they are new; Scribble and the
+Quiz because their behaviour just changed (a rewritten canvas pointer mapping, and
+questions that no longer need the internet).
 
 ---
 
 ## ✨ Features
 
-- 🌐 **Fully local** — runs on your LAN, no internet required after setup
+- 🌐 **Fully local** — runs on your LAN, no internet required at all: even the Quiz falls back to a built-in question bank
+- 🔧 **One config file** — `.env` for the port, the mDNS name and the Quiz source; every value optional
 - 📱 **Works everywhere** — phone, tablet, laptop — any browser
 - 🏠 **Room codes** — create a room, share the 6-letter code or invite link, done
 - 🔗 **Smart invite links** — link pre-fills the room code and shows only the game being joined
@@ -83,6 +87,31 @@ npm install
 | Anywhere | `npm start` |
 
 Open **[http://localhost:4000](http://localhost:4000)** in your browser.
+
+### Configuration (optional)
+
+Every setting has a working default, so there is nothing to configure to play. To
+change one, copy the committed example and edit it — the `check-and-start` scripts
+offer to do it for you:
+
+```bash
+cp .env.example .env
+```
+
+`.env` is read at startup, so it applies to `npm start`, `start.bat`,
+`check-and-start.ps1` and `docker compose` alike. It is gitignored.
+
+| Variable | Default | What it does |
+|----------|---------|--------------|
+| `PORT` | `4000` | Port the server listens on |
+| `HOST` | `0.0.0.0` | Interface to bind — `127.0.0.1` for this machine only |
+| `MDNS_ENABLED` | `true` | Advertise `gamenight.local` over Bonjour |
+| `MDNS_HOST` | `gamenight.local` | The name advertised |
+| `QUIZ_SOURCE` | `auto` | `auto` · `online` · `offline` — where Quiz questions come from |
+| `QUIZ_API_URL` | opentdb.com | Trivia API, for a mirror |
+
+A value that makes no sense stops the server with a message naming it, rather than
+starting half-broken.
 
 ---
 
@@ -139,11 +168,13 @@ In larger games there may be **multiple Doctors** — roughly one per five playe
 ### 🃏 UNO
 Standard UNO rules. Each player starts with 7 cards. On your turn, play a card that matches the top discard by color or value, or draw one from the deck. Special cards: **Skip** ends the next player's turn, **Reverse** flips direction, **+2** forces the next player to draw two, **Wild** lets you choose the active color, **Wild +4** does the same and forces a four-card draw. First player to empty their hand wins. Your name is displayed in the top-left of the game header.
 
-### 🧠 Quiz
-The server fetches questions from the [Open Trivia Database](https://opentdb.com) at game start and sorts them easy → medium → hard. While questions are loading, players see a "Fetching questions…" screen; the first question appears automatically once the fetch completes (usually under a second, up to ~6 s if the API rate-limits). Each question shows 4 lettered options (A–D) with a countdown timer. Correct answers score 500–1000 points based on speed — the first player to answer correctly earns a +200 bonus (marked with ⚡). After each question the correct answer is revealed with animations alongside the updated leaderboard. The game-over ranking table shows each player's correct-answer count alongside their total score. Requires internet access when starting the game.
+### 🧠 Quiz `beta`
+The server fetches questions from the [Open Trivia Database](https://opentdb.com) at game start and sorts them easy → medium → hard. While questions are loading, players see a "Fetching questions…" screen; the first question appears automatically once the fetch completes (usually under a second, up to ~6 s if the API rate-limits). Each question shows 4 lettered options (A–D) with a countdown timer. Correct answers score 500–1000 points based on speed — the first player to answer correctly earns a +200 bonus (marked with ⚡). After each question the correct answer is revealed with animations alongside the updated leaderboard. The game-over ranking table shows each player's correct-answer count alongside their total score.
 
-### 🎨 Scribble
-One player draws a secret word on a shared canvas while everyone else types guesses in the chat. Faster correct guesses = more points. The drawer earns bonus points for each correct guesser. Hints appear as time runs low. Roles rotate every turn.
+**No internet? It still plays.** If opentdb.com is unreachable, blocked, or rate-limiting past its retries, the Quiz falls back to a bundled bank of 60 questions in `data/quiz-questions.json`, tells the room it has done so, and starts. Set `QUIZ_SOURCE=offline` to always use the bank (and skip the attempt), or `online` to refuse the fallback. Adding your own questions to that JSON file is the intended way to extend it.
+
+### 🎨 Scribble `beta`
+One player draws a secret word on a shared canvas while everyone else types guesses in the chat. Faster correct guesses = more points. The drawer earns bonus points for each correct guesser. Hints appear as time runs low. Roles rotate every turn. The canvas is 800×500 whatever your screen size, so everyone sees the same drawing; on a window of a different shape the drawing is centred with a blank margin.
 
 ### ⭕ Tic Tac Toe
 Get your symbols in a row (horizontal, vertical, or diagonal) to win. X always goes first. Symbols swap each game. The host picks the grid: 3×3 (align 3), 4×4 (align 4) or 5×5 (align 4). In match formats, first to reach the win target takes the match. Supports single-elimination tournaments for groups.
@@ -177,6 +208,10 @@ The whole room is seeded into a single-elimination bracket. Both players in a ma
 ```
 gamenight/
 ├── server.js            # All game logic + Socket.io events
+├── config.js            # The only reader of process.env / .env
+├── .env.example         # Every variable, documented, with its default
+├── data/
+│   └── quiz-questions.json  # Offline Quiz question bank
 ├── public/
 │   ├── index.html       # Single-page app shell
 │   ├── style.css        # Dark theme, animations
@@ -225,8 +260,9 @@ Three short forms, one per kind of report:
 - [💡 Feature request](https://github.com/gogo25171/gamenight/issues/new?template=feature_request.yml) — a setting, a variant, a quality-of-life fix
 - [🎲 New game](https://github.com/gogo25171/gamenight/issues/new?template=new_game.yml) — a game you want to see in the list
 
-Feedback on the three `beta` games is the most useful of all: they work, but
-nobody has played them enough to know if they are any *fun*.
+Feedback on the `beta` games is the most useful of all — especially Scribble on a
+phone or a tablet, and the Quiz on a network with no internet. They work here;
+nobody has played them enough to know they work everywhere.
 
 ---
 

@@ -8,6 +8,10 @@ no front-end framework.
 ```text
 gamenight/
 ├── server.js            # All game logic + Socket.io events
+├── config.js            # The only reader of process.env / .env
+├── .env.example         # Every variable, documented, with its default
+├── data/
+│   └── quiz-questions.json  # Offline Quiz bank
 ├── public/
 │   ├── index.html       # Single-page app shell
 │   ├── style.css        # Dark theme, animations
@@ -116,9 +120,29 @@ running. Always use them instead of a bare `setTimeout`.
 
 ## Networking
 
-The server listens on `0.0.0.0` and advertises itself over mDNS as
-`gamenight.local` using `bonjour-service`. `SIGINT` and `SIGTERM` unpublish the
-mDNS record before exiting.
+The server listens on `HOST` (default `0.0.0.0`) and advertises itself over mDNS as
+`MDNS_HOST` (default `gamenight.local`) using `bonjour-service`. `SIGINT` and
+`SIGTERM` unpublish the mDNS record before exiting. `MDNS_ENABLED=false` skips the
+announcement entirely, which is the sensible setting behind a bridge network.
+
+Nothing else leaves the LAN. The Quiz *asks* opentdb.com for questions and falls
+back to `data/quiz-questions.json` when it cannot reach it, so even that is not a
+dependency — see [game internals](game-internals.md).
+
+## Configuration
+
+`config.js` is the only module that reads `process.env`. It loads `.env` if there
+is one (without overriding a variable already set), validates every value, and
+**refuses to start** on a value it does not understand rather than falling back to
+a default the operator did not choose. Everything else imports the resolved
+`config` object.
+
+Adding a knob means adding it in three places, and `test/config.test.js` fails if
+the last one is forgotten:
+
+1. a reader in `buildConfig()`
+2. a line in `.env.example`, with its default and what it does
+3. a row in the table in [installation](../getting-started/installation.md#configuration-env)
 
 ## Known debt
 

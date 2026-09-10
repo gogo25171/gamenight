@@ -198,27 +198,50 @@ fixed up around them; if that leaves one player, they win by default.
 
 ## :brain: Quiz
 
-The one feature in the project that needs the internet.
+The one game that *reaches* for the internet, and the only one with a fallback for
+when it cannot.
 
 ### Tweak it
 
-**The question source** is a single `fetch` in `fetchQuizQuestions()`:
+**The question source** is chosen by `loadQuizQuestions(n, source)`, where `source`
+comes from `QUIZ_SOURCE` in the [`.env`](../getting-started/installation.md#configuration-env):
 
-```js
-const res = await fetch(`https://opentdb.com/api.php?amount=${n}&type=multiple&encode=url3986`);
-```
+| `source` | What it does |
+|----------|--------------|
+| `auto` | `fetchQuizQuestions()`, then `quizLocalQuestions()` if that throws |
+| `online` | `fetchQuizQuestions()` only — the error propagates and `startQuiz()` sends the room back to the lobby |
+| `offline` | `quizLocalQuestions()`, without touching `fetch` at all |
 
-To use a **local bank instead** — the change that makes GameNight work on a LAN
-with no uplink — replace the body of that function with something that returns
-the same array shape and drop the retry loop:
+Both paths funnel through `quizBuildQuestion()` and `quizByDifficulty()`, so both
+produce the same shape, in the same `easy → medium → hard` order:
 
 ```js
 { question, correctAnswer, options: [/* 4, shuffled, includes the answer */], difficulty }
 ```
 
 Everything downstream (`quizPublic`, `quizReveal`, the client) reads only those
-four fields. Questions are sorted `easy → medium → hard` before play, so keep a
-`difficulty` on each entry if you want that ramp.
+four fields.
+
+**The bundled bank** is `data/quiz-questions.json` — 60 entries, and the only data
+file the project has:
+
+```json
+{ "difficulty": "easy", "question": "…", "answer": "…", "wrong": ["…", "…", "…"] }
+```
+
+The answer is stored apart from the wrong ones rather than as a ready-made option
+list, so it can never end up at a predictable index; `quizBuildQuestion()` shuffles
+the four together at deal time. `test/quiz.test.js` checks the shape of every entry
+— exactly three wrong answers, a known difficulty, no duplicate question — so a
+typo fails `npm test` instead of showing four wrong options mid-party.
+
+`quizLocalQuestions(n)` shuffles the bank and takes `n`, capped at the bank size:
+a 25-question game (the lobby maximum) never repeats a question, but two
+consecutive games from the bank will overlap. Adding questions is the fix, and
+costs nothing but the JSON.
+
+**The API URL** is `QUIZ_API_URL`, for pointing at a mirror. The response has to
+match the OpenTDB shape (`response_code`, `results[]`, `url3986` encoding).
 
 **The scoring curve** is in `quizReveal()`:
 
@@ -235,10 +258,11 @@ if (id === firstCorrectId) points += 200;      // speed bonus
 ### How it works
 
 `startQuiz()` is the only `async` start function. It emits
-`{ phase: 'loading' }` first, then fetches: OpenTDB rate-limits hard, so the
+`{ phase: 'loading' }` first, then loads: OpenTDB rate-limits hard, so the
 fetch retries **4 times, 6 seconds apart**, treating `response_code === 5` as
-"try again". If it still fails, the room is sent back to the lobby with a
-notification rather than left staring at a spinner.
+"try again". If it still fails, `auto` falls back to the bundled bank and the room
+is told so (`quiz.offlineBank`); only `online` sends the room back to the lobby.
+Either way nobody is left staring at a spinner.
 
 Phases are `loading → question ⇄ reveal → gameover`, each question scheduled by
 the previous reveal.
@@ -318,6 +342,8 @@ games, which is why they are tested on their own rather than through either game
 
 ## :art: Scribble
 
+In beta. Events are `scribble:`.
+
 ### Tweak it
 
 **The word list** is a flat array of about 110 English words:
@@ -377,6 +403,29 @@ Two secrets, handled differently:
 Strokes are appended to `gs.drawingData` and relayed with `socket.to(room.code)`
 (everyone *except* the sender, who already drew them locally). Keeping the array
 is what lets a reconnecting player receive the drawing so far.
+
+**The canvas geometry is the one client-side subtlety.** The bitmap is a fixed
+800×500 and strokes travel as fractions of it (`nx`, `ny` in 0–1), so every screen
+sees the same drawing whatever its size. The element itself is stretched by the
+flex layout and its CSS is `object-fit: contain`, which fits that bitmap inside the
+box **without distorting it** — so the drawing is letterboxed, and the element box
+is not where the pixels are.
+
+`pointerToBitmap()` in [scribble.js](https://github.com/gogo25171/gamenight/blob/main/public/js/scribble.js)
+undoes that fit:
+
+```js
+const scale = Math.min(rect.width / bmpW, rect.height / bmpH);
+const left  = rect.left + (rect.width  - bmpW * scale) / 2;
+const top   = rect.top  + (rect.height - bmpH * scale) / 2;
+return { x: (clientX - left) / scale, y: (clientY - top) / scale };
+```
+
+Scaling each axis by the box alone — the bug this replaced — put the ink beside the
+cursor, further off the closer to an edge you drew. The function takes a rect and
+two numbers rather than reading the DOM, precisely so `test/scribble-pointer.test.js`
+can check it without a browser; that test also asserts the CSS still says
+`contain`, because the maths and the stylesheet have to change together.
 
 A round ends when the timer runs out or when every non-drawer has guessed. If the
 **drawer** leaves, the round ends immediately; if the drawer list empties, so does
@@ -616,7 +665,7 @@ and the bracket carries on; leaving from anywhere else just removes them from
 ## Testing a change to any of this
 
 ```bash
-npm test              # 100+ tests, ~10 s, no dependencies
+npm test              # 128 tests, ~30 s, no dependencies
 npm run i18n:check    # en/fr parity
 node --check server.js
 ```

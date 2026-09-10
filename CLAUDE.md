@@ -8,14 +8,17 @@ GameNight is a self-hosted LAN party-game server: one Node process, no database,
 no build step, no front-end framework. Eight games (Mongolpuri, UNO, Quiz,
 Tic Tac Toe, Scribble, Connect Four, Undercover, Rock Paper Scissors) all live in
 a single `server.js` and are driven over Socket.io. Everything the app renders is
-static files served from `public/`.
+static files served from `public/`. Two files sit beside it: `config.js`, the only
+reader of the environment, and `data/quiz-questions.json`, the offline Quiz bank.
 
-The last three ship behind a `BETA` badge. `BETA_GAMES` in
-[app.js](public/js/app.js) drives the chip in the lobby; the chip on the home card
-and inside each game's own view is markup in
+Five games ship behind a `BETA` badge — Connect Four, Undercover and Rock Paper
+Scissors because they are new, Scribble and Quiz because their behaviour changed
+under players. `BETA_GAMES` in [app.js](public/js/app.js) drives the chip in the
+lobby; the chip on the home card and inside each game's own view is markup in
 [index.html](public/index.html) (`class="badge-beta"`). A test in
 [test/lifecycle.test.js](test/lifecycle.test.js) keeps the three surfaces in sync
-with that list.
+with that list. A game whose behaviour changes under players goes back in the list
+until a party has confirmed the change — the list is not only for new games.
 
 ## Commands
 
@@ -23,7 +26,7 @@ with that list.
 npm install
 npm start                  # node server.js  → http://localhost:4000
 npm run dev                # nodemon, restarts on save
-npm test                   # node --test — the suite in test/, ~10 s, no dependencies
+npm test                   # node --test — the suite in test/, ~30 s, no dependencies
 npm run i18n:check         # en.json / fr.json parity and unused-key report
 node --check <file.js>     # syntax check — CI runs this over every .js outside node_modules
 pre-commit run --all-files # full hook suite (pip install pre-commit commitizen; pre-commit install)
@@ -134,13 +137,34 @@ constant to edit to change its words, cards, deck or timings (`UC_WORD_PAIRS`,
 `RPS_BEATS`). Update it alongside any game change, and add a section for a new
 game.
 
+### Configuration
+
+[config.js](config.js) is the **only** module that reads `process.env`. It loads a
+`.env` if present (never overriding an already-set variable — so `PORT=5000 npm
+start` and docker's `environment:` still win), validates every value, and exits
+with a message naming the culprit rather than falling back to a default nobody
+chose. Everything else imports the resolved `config` object.
+
+A new knob means three edits, and [test/config.test.js](test/config.test.js) fails
+if the second is forgotten: a reader in `buildConfig()`, a documented line in
+[.env.example](.env.example), and a row in the table in
+[docs/getting-started/installation.md](docs/getting-started/installation.md).
+`.env` is gitignored and excluded from the image; compose passes the values in as
+environment variables instead. New top-level files also need adding to the
+Dockerfile's explicit `COPY` list.
+
 ### Networking
 
-Listens on `0.0.0.0` and advertises `gamenight.local` over mDNS via
-`bonjour-service`; `SIGINT`/`SIGTERM` unpublish the record before exit. Port
-comes from `PORT` (default 4000). The Quiz fetches questions from opentdb.com at
-game start — it is the one feature that needs internet, with a retry loop for
-rate limiting.
+Listens on `HOST` (default `0.0.0.0`) and advertises `MDNS_HOST` (default
+`gamenight.local`) over mDNS via `bonjour-service` unless `MDNS_ENABLED=false`;
+`SIGINT`/`SIGTERM` unpublish the record before exit. Port comes from `PORT`
+(default 4000).
+
+Nothing has to leave the LAN. The Quiz *prefers* opentdb.com (with a retry loop
+for rate limiting) and falls back to `data/quiz-questions.json` when it cannot
+reach it, telling the room so. `QUIZ_SOURCE` (`auto` / `online` / `offline`)
+picks the policy; `loadQuizQuestions(n, source)` takes the source as a parameter
+so tests can drive all three branches.
 
 ## Conventions
 

@@ -30,7 +30,7 @@ Le socle. Tant que ce n'est pas fait, chaque nouveauté augmente la dette.
 
 | Chantier | Pourquoi maintenant | Effort |
 |----------|---------------------|--------|
-| [Sortir les 3 jeux de bêta](#-sortir-les-3-jeux-de-bêta) — soirées de test, équilibrage, retrait du badge | Trois jeux livrés mais jamais joués pour de vrai. Le câblage est vérifié et documenté (audit ci-dessous) ; il reste **les soirées de test** | 2-3 soirées |
+| [Sortir les 5 jeux de bêta](#-sortir-les-5-jeux-de-bêta) — soirées de test, équilibrage, retrait du badge | Trois jeux livrés mais jamais joués pour de vrai, plus Scribble et le Quiz dont le comportement vient de changer. Le câblage est vérifié et documenté (audit ci-dessous) ; il reste **les soirées de test** | 3-4 soirées |
 | [Découper `server.js`](#-bugs--dette-technique) en `games/<id>.js` | 1 900 lignes. Ce n'est plus un blocage pour les tests, mais ça le redevient pour la relecture dès le prochain jeu | 1 jour |
 | ~~[Réglage `nightTime` absent du lobby](#-bugs--dette-technique)~~ | ✅ **fait** — le champ est dans `SETTINGS_SCHEMA`, et un test vérifie désormais que *chaque* défaut serveur a un contrôle dans le lobby | ~~10 min~~ |
 | [Anti-triche / anti-bot](#-anti-triche-anti-bot-anti-abus) — au minimum le jeton de reconnexion | Un salon en cours se reprend **avec le seul pseudo** : n'importe qui dans le salon peut voler la session d'un autre et son rôle secret. C'est le trou le plus large du projet | 1 jour |
@@ -41,10 +41,10 @@ Un seul à la fois. Mon ordre :
 
 | # | Chantier | Pourquoi | Effort |
 |---|----------|----------|--------|
-| 1 | [Bots](#-bots--compléter-une-table-ou-jouer-tout-seul) — infrastructure + morpion + Puissance 4 | Débloque deux usages que rien ne couvre : la table incomplète et le joueur seul. Et son évaluateur **sert deux fois** : le coach de la section suivante en dépend | 2-3 jours |
+| 1 | [Bots](#-bots--compléter-une-table-ou-jouer-tout-seul) — infrastructure + **Puissance 4 puis morpion** (palier 🟢) | Débloque deux usages que rien ne couvre : la table incomplète et le joueur seul. Et son évaluateur **sert deux fois** : le coach de la section suivante en dépend. Les jeux de discussion (Undercover, Mongolpuri) et Scribble sont un palier à part, qui demande un modèle d'IA — à ne pas mélanger avec celui-ci | 2-3 jours |
 | 2 | [Apprentissage des techniques](#-apprendre-les-techniques-de-chaque-jeu) — onglet « Techniques » | La partie HTML + i18n est indépendante des bots et peut se faire en parallèle. L'analyse d'après-partie, elle, attend l'évaluateur | 1 jour pour l'onglet |
 | 3 | [Bataille Navale](#-bataille-navale--plan-dimplémentation) | Le seul jeu de la liste qui apporte une mécanique neuve (la phase de placement) plutôt qu'une variante | 2 jours |
-| 4 | [Banque de questions locale pour le Quiz](#-bugs--dette-technique) | Supprime la **seule** dépendance internet du projet. Un LAN sans wifi, et le Quiz meurt | 0,5 jour |
+| 4 | ~~[Banque de questions locale pour le Quiz](#-bugs--dette-technique)~~ | ✅ **fait** — 60 questions dans `data/quiz-questions.json`, `QUIZ_SOURCE=auto\|online\|offline`. Plus aucune dépendance internet. Reste à étoffer la banque et à décider si elle doit se traduire | ~~0,5 jour~~ |
 
 ### 🟡 P2 — confort, à prendre quand l'envie vient
 
@@ -54,7 +54,7 @@ Un seul à la fois. Mon ordre :
 | [Variantes de jeux](#-variantes-de-jeux--à-réfléchir) | Beaucoup de plaisir pour peu de code — souvent un seul réglage |
 | [Numéro de version par jeu](#-numéro-de-version-par-jeu) | Devient utile le jour où les retours des joueurs arrivent |
 | [Retours des joueurs](#-espace-de-commentaires--retours-des-joueurs) | Les formulaires GitHub sont en place et mis en avant ; le formulaire **dans l'app** reste à faire, et il ne vaut que s'il y a des joueurs autres que soi |
-| [Configuration `.env`](#-configuration-par-fichier-env) | Confort d'hébergement, invisible pour les joueurs |
+| ~~[Configuration `.env`](#-configuration-par-fichier-env)~~ | ✅ **premier étage fait** — `config.js`, `.env.example`, 6 variables. Reste le durcissement `GAMENIGHT_MODE=public` + `ACCESS_CODE`, qui dépend de l'anti-triche |
 | [Documentation : captures et diagrammes](#-faire-évoluer-la-documentation) | Le manque le plus visible pour un nouvel arrivant |
 | [Plus de langues](#-traduction--i18n--par-joueur) | EN et FR couvrent déjà la table |
 
@@ -137,11 +137,24 @@ Classés par effort d'implémentation. « Réutilise » = infra déjà en place 
 
 ---
 
-## 🚧 Sortir les 3 jeux de bêta
+## 🚧 Sortir les 5 jeux de bêta
 
 Puissance 4, Undercover et Pierre-Feuille-Ciseaux sont livrés depuis
 [a6f8e24](https://github.com/gogo25171/gamenight/commit/a6f8e24) et portent un badge
 `BETA`. Question posée le 09/09/2026 : **sont-ils finis ?**
+
+**Scribble et le Quiz les ont rejoints le 10/09/2026**, non pas parce qu'ils sont
+neufs mais parce que leur comportement a changé sous les joueurs :
+
+| Jeu | Ce qui a changé | Ce qu'il faut vérifier à table |
+|-----|-----------------|-------------------------------|
+| 🎨 **Scribble** | Le mappage du pointeur sur le canevas a été réécrit : l'encre atterrissait à côté du curseur, d'autant plus loin qu'on approchait d'un bord (`object-fit: contain` letterboxe le bitmap 800×500, l'ancien calcul ignorait les bandes) | Dessiner **sur téléphone, tablette et ordinateur**, en portrait comme en paysage, jusqu'aux quatre coins. C'est le seul bug de ce genre qui ne se voit pas dans un test |
+| 🧠 **Quiz** | Les questions peuvent venir d'une banque locale (`data/quiz-questions.json`, 60 questions) quand opentdb.com est injoignable, et `QUIZ_SOURCE` choisit la politique | Une partie sans wifi du tout ; une partie avec un wifi qui tombe **pendant** le chargement ; vérifier que la notification « banque locale » se voit |
+
+> 💬 **Le principe à garder :** un jeu dont le comportement change retourne en bêta,
+> même s'il était en production depuis des mois. Le badge ne dit pas « jeu neuf », il
+> dit « pas encore joué sous cette forme ». C'est noté dans
+> [adding-a-game.md](docs/development/adding-a-game.md).
 
 ### ✅ Ce qui est vérifié (audit de code, 09/09/2026)
 
@@ -193,12 +206,25 @@ Rien de bloquant côté code ; ce sont des décisions de jeu, qui demandent d'y 
       manche au lieu de tirer au sort
 - [ ] **P-F-C — le rythme** (2,8 s de révélation + 1,4 s entre matchs) n'a jamais été
       jugé à table. Trop lent à 8 joueurs ?
+- [ ] **Scribble — le canevas sur tous les écrans.** Le calcul est testé
+      ([test/scribble-pointer.test.js](test/scribble-pointer.test.js)), la *perception* ne
+      l'est pas. Un tour de dessin complet par type d'écran, en visant les bords
+- [ ] **Scribble — les bandes vides.** À 800×500 dans une fenêtre d'un autre format, le
+      dessin est centré avec une marge inerte. Acceptable, ou faut-il un canevas dont le
+      bitmap suit le format de la fenêtre (et donc des coordonnées relatives qui ne
+      supposent plus 800×500) ?
+- [ ] **Quiz — étoffer la banque locale.** 60 questions : une soirée de deux parties
+      d'affilée en verra une bonne partie deux fois. 200 serait confortable. C'est du JSON,
+      ça ne coûte que du temps de rédaction
+- [ ] **Quiz — la banque est en anglais**, comme opentdb.com. Même problème que les paires
+      d'Undercover : le contenu est partagé par le salon, donc il ne peut pas suivre la
+      langue de chaque joueur → réglage `contentLanguage` du salon + une banque par langue
 - [ ] **Deux soirées de test réelles** par jeu, avec des joueurs qui ne connaissent pas
       le code. C'est la seule chose que l'audit ne peut pas remplacer
-- [ ] Puis retirer le badge : `BETA_GAMES` dans [app.js](public/js/app.js#L73), les trois
+- [ ] Puis retirer le badge : `BETA_GAMES` dans [app.js](public/js/app.js#L73), les cinq
       `<span class="badge-beta">` d'[index.html](public/index.html), le `beta` du
       [README](README.md), les `:material-flask:` de [docs/games/](docs/games/) et l'entête
-      de ce fichier
+      de ce fichier. Un test échoue si une surface est oubliée
 
 ---
 
@@ -522,29 +548,116 @@ Les points à ne pas rater :
       ([server.js:86](server.js#L86)) avec un délai un peu aléatoire — jamais un
       `setTimeout` nu, sinon une salle vidée laisse des timers derrière elle.
 
-### 🎯 Faisabilité, jeu par jeu
+### 🎯 Faisabilité, jeu par jeu — trois paliers
 
-| Jeu | Difficulté du bot | Ce qui existe déjà |
-|-----|-------------------|--------------------|
-| ⭕ **Morpion** | ⭐ Triviale | `tttWin()` ([server.js:714](server.js#L714)) est déjà générique : minimax sur 3×3, profondeur limitée sur 4×4 / 5×5 |
-| 🔴 **Puissance 4** | ⭐⭐ Facile | `c4Win()` ([server.js:1525](server.js#L1525)) donne la détection ; reste une fonction d'évaluation et un negamax profondeur 4–6 |
-| ✂️ **Pierre-Feuille-Ciseaux** | ⭐ Triviale — et la plus intéressante | Le hasard est mathématiquement optimal, donc un bot « fort » est forcément un **prédicteur de motifs**. C'est le terrain d'essai idéal du modèle joueur décrit plus bas |
-| 🃏 **UNO** | ⭐⭐ Facile | Heuristiques sur la main : garder les cartes noires, poser la couleur dominante, viser le joueur qui a peu de cartes |
-| 🧠 **Quiz** | ⭐ Triviale | Répondre juste avec une probabilité fixée par le niveau, avec un temps de réponse plausible |
-| 🕵️ **Undercover** | ⭐⭐⭐⭐ Difficile | Il faut **produire un indice en langue naturelle** puis juger ceux des autres. Hors de portée sans modèle de langue |
-| 🔪 **Mongolpuri** | ⭐⭐⭐⭐ Difficile | Le jeu **est** la discussion. Un bot muet qui vote au hasard ne trompe personne |
-| 🎨 **Scribble** | ⭐⭐⭐⭐⭐ Hors sujet | Dessiner. Non. |
+L'ordre n'est pas une préférence, c'est une **contrainte technique** : les trois
+paliers ne demandent pas le même genre de code, et le troisième ne demande même
+plus le même genre de projet. Faire le palier 1 en entier avant de regarder le 2.
 
-> 💬 **Mon avis :** commencer par **Morpion et Puissance 4**. Ce sont des jeux à
-> information parfaite, le moteur de recherche tient en cinquante lignes, et — c'est
-> le point important — **la même fonction d'évaluation sert ensuite au coach**
-> décrit dans la section suivante. Un seul effort, deux fonctionnalités.
->
-> Pour les jeux de discussion (Undercover, Mongolpuri), mieux vaut **assumer qu'il
-> n'y aura pas de bot** que d'en livrer un qui vote au hasard : il gâche la partie
-> des humains au lieu de la sauver. Si l'envie d'un vrai bot revient, c'est une
-> dépendance à un modèle de langue — donc un appel réseau, donc la fin du
-> « fonctionne sans internet ». À arbitrer consciemment, comme le Quiz l'a déjà été.
+#### 🟢 Palier 1 — information parfaite : un negamax et c'est fini
+
+Le plateau est entièrement visible, il n'y a pas de hasard, la théorie des jeux
+donne la réponse. **C'est là qu'on commence, et c'est là que naît la brique
+réutilisable** : la fonction d'évaluation sert ensuite au coach de la section
+suivante. Un seul effort, deux fonctionnalités.
+
+| Jeu | Difficulté | Ce qui existe déjà |
+|-----|-----------|--------------------|
+| 🔴 **Puissance 4** | ⭐⭐ Facile — **le jeu de référence, à écrire en premier** | `c4Win()` ([server.js:1525](server.js#L1525)) donne la détection ; reste une fonction d'évaluation (compter les alignements de 2 et 3 ouverts, pondérer les colonnes centrales) et un negamax profondeur 4–6 avec élagage alpha-bêta |
+| ⭕ **Morpion** | ⭐ Triviale — **presque gratuit ensuite** | Le même negamax avec `tttWin()` ([server.js:714](server.js#L714)) à la place de `c4Win()`. Sur 3×3 la profondeur complète tient, donc « Impitoyable » est littéralement imbattable ; sur 4×4 / 5×5 on borne la profondeur |
+
+> 💬 **Pourquoi Puissance 4 avant le morpion**, alors qu'il est un cran plus dur : le
+> morpion 3×3 se résout par force brute et **n'oblige pas à écrire de fonction
+> d'évaluation**. Or c'est cette fonction qui est la vraie valeur — celle qui mesure
+> « ce coup était une gaffe » pour le coach. Commencer par Puissance 4 la rend
+> obligatoire ; le morpion en découle en une heure. Commencer par le morpion, c'est
+> risquer de livrer un minimax sans évaluateur, et de tout reprendre après.
+
+#### 🔵 Palier 2 — information cachée ou hasard : des heuristiques, pas de la théorie
+
+Plus de solution optimale à calculer, mais des règles du pouce qui suffisent
+largement pour un adversaire crédible. Aucun de ces trois ne dépend du palier 1 ;
+ils peuvent se faire dans n'importe quel ordre.
+
+| Jeu | Difficulté | L'approche |
+|-----|-----------|------------|
+| 🧠 **Quiz** | ⭐ Triviale | Répondre juste avec une probabilité fixée par le niveau, après un délai plausible. Le bot **connaît** la bonne réponse (il lit `gs.questions`) : tout le travail est de le faire se tromper de façon crédible |
+| ✂️ **Pierre-Feuille-Ciseaux** | ⭐ Triviale — et la plus intéressante | Le hasard est mathématiquement optimal, donc un bot « fort » est forcément un **prédicteur de motifs**. Terrain d'essai idéal du modèle joueur décrit plus bas, et le seul jeu où le bot le plus fort est aussi le plus amusant à écrire |
+| 🃏 **UNO** | ⭐⭐ Facile | Heuristiques sur la main : garder les cartes noires, poser la couleur dominante, viser le joueur qui a peu de cartes. Aucune recherche, juste un ordre de préférence |
+
+#### 🔴 Palier 3 — il faut produire du langage ou une image : un modèle d'IA
+
+Ici l'obstacle n'est plus algorithmique. Le bot doit **écrire un indice** que des
+humains vont juger, **argumenter** dans une discussion, ou **dessiner**. Aucune
+heuristique ne s'en approche : un bot muet qui vote au hasard ne trompe personne et
+gâche la partie des humains au lieu de la sauver.
+
+| Jeu | Ce qu'il faut produire | Difficulté réelle |
+|-----|------------------------|-------------------|
+| 🕵️ **Undercover** | Un indice d'un mot sur son propre mot, puis un jugement sur les indices des autres | ⭐⭐⭐⭐ La sortie est courte (un mot !) mais elle doit être **juste assez vague** : trop précise et le bot se grille, trop vague et il sort au premier vote |
+| 🔪 **Mongolpuri** | Des phrases de discussion, un vote argumenté, un bluff tenu sur plusieurs tours | ⭐⭐⭐⭐⭐ Le jeu **est** la discussion. Il faut en plus une **cohérence entre les tours** : c'est de la mémoire de partie, pas un appel isolé |
+| 🎨 **Scribble** | Un dessin reconnaissable, **tracé au trait**, en temps réel | ⭐⭐⭐⭐⭐ Le plus dur de tous, et pas pour la raison qu'on croit — voir ci-dessous |
+
+##### 🎨 Le cas Scribble, en détail
+
+Le protocole de Scribble ne transporte pas d'image : il transporte des **traits**
+(`{type:'begin'|'point'|'end', nx, ny, color, size}`, normalisés 0–1). Un bot
+dessinateur doit donc produire une **séquence de traits**, pas un PNG. Trois pistes,
+de la plus honnête à la plus ambitieuse :
+
+- [ ] **Une banque de dessins vectoriels pré-tracés**, un par mot de `WORDS`. Zéro
+      IA, zéro réseau, ça marche, et c'est rejouable trait par trait à vitesse humaine.
+      Le coût est humain : ~110 dessins à faire à la main. **De très loin le meilleur
+      rapport résultat / risque**, et faisable en une soirée à plusieurs. À tenter
+      *avant* toute autre piste
+- [ ] **Un modèle qui génère du SVG ou une polyligne** à partir du mot, converti en
+      traits. Un modèle de langue sait écrire du SVG ; la question ouverte est de savoir
+      si le résultat est *reconnaissable* à main levée — et la seule façon de le savoir
+      est d'essayer sur dix mots
+- [ ] **Génération d'image + vectorisation** (contours → polylignes). Le plus lourd, le
+      plus lent, et le rendu ressemble à un calque plutôt qu'à un dessin de soirée. À
+      écarter, sauf curiosité
+
+##### 🤖 Faire intervenir un modèle d'IA — ce que ça implique vraiment
+
+C'est un **changement de nature du projet**, pas une fonctionnalité de plus. À
+arbitrer consciemment, comme le Quiz l'a été — et le Quiz vient justement de choisir
+l'inverse (banque locale, plus aucune dépendance internet).
+
+Ce qui casse, et qu'il faut accepter explicitement :
+
+| Ce qu'on perd | Détail |
+|---------------|--------|
+| **« Fonctionne sans internet »** | La promesse principale du projet, écrite dans le [README](README.md). Un bot Undercover en LAN sans wifi ne joue pas. Un modèle **local** (Ollama, llama.cpp) la préserve, au prix d'une machine capable |
+| **« Aucune clé, aucun compte »** | Une clé d'API à stocker → `.env`, et une clé absente doit dégrader proprement : bot désactivé, jamais plantage |
+| **Le coût par partie** | Aujourd'hui zéro. Devient non nul — petit, mais réel (ordres de grandeur ci-dessous) |
+| **La latence maîtrisée** | Un tour d'indice dure 30 s. Un appel réseau qui dépasse, c'est un bot qui ne parle pas. Il faut un **délai maximum et un repli** (indice de secours tiré d'une liste), jamais une attente indéfinie |
+| **La confidentialité** | Pseudos et messages de chat partiraient chez un tiers. Pour un jeu entre amis, ce n'est pas rien. N'envoyer que le nécessaire : le mot du bot et les indices déjà publics — jamais le chat, jamais les pseudos |
+
+Le choix du modèle, si on y va (tarifs API Anthropic par million de jetons,
+relevés le 10/09/2026) :
+
+| Modèle | Entrée / sortie | Pour quoi ici |
+|--------|-----------------|---------------|
+| `claude-haiku-4-5` | 1 $ / 5 $ | **Le bon choix par défaut.** Un indice d'Undercover fait un mot : tâche courte et cadrée, exactement le profil d'un petit modèle rapide — et la latence compte plus que la finesse |
+| `claude-sonnet-5` | 2 $ / 10 $ | Si le bluff de Mongolpuri sur plusieurs tours demande mieux |
+| `claude-opus-5` | 5 $ / 25 $ | Difficile à justifier pour un jeu de soirée. À réserver à un essai de qualité, pas à la production |
+
+Ordre de grandeur : un indice, c'est quelques centaines de jetons d'entrée et une
+dizaine en sortie. Une partie d'Undercover à deux bots coûte **des fractions de
+centime**. Le coût n'est donc pas l'obstacle — l'obstacle, c'est la promesse
+hors-ligne et la latence. Et comme le contexte (les règles, le rôle) est identique
+d'un appel à l'autre, le **cache de prompt** rend la facture encore plus
+négligeable.
+
+- [ ] Si on y va : un seul module `bots/llm.js`, une seule fonction, **désactivé par
+      défaut** derrière une variable `.env` (`BOT_LLM_PROVIDER` vide = pas de bot
+      bavard). Le reste du projet ne doit pas savoir qu'il existe
+- [ ] Un **repli déterministe obligatoire** à chaque appel : délai dépassé, clé
+      absente, erreur réseau → le bot joue son coup de secours et la partie continue. Un
+      bot qui bloque une phase est pire que pas de bot
+- [ ] Le badge « bot » du lobby doit distinguer **bot local** et **bot IA** : un joueur
+      a le droit de savoir que ce qu'il écrit part sur un serveur distant
 
 ### 🧠 Le jeu apprend comment tu joues
 
@@ -595,17 +708,46 @@ modèle qui « apprend » ne vaut rien s'il meurt à chaque redémarrage.
 
 ### 📋 Ordre de mise en œuvre
 
-- [ ] `botAct()` générique + id synthétiques + comptage des humains pour le ménage
-      des rooms *(l'infrastructure, sans aucun jeu)*
-- [ ] Bot Morpion aux 4 niveaux — le plus simple, sert de gabarit
-- [ ] Réglages de lobby : niveau, nombre de bots, remplissage automatique
+Chaque étape est livrable seule. **Ne pas commencer une étape tant que la
+précédente n'est pas jouée à table** — un bot est une fonctionnalité qui se juge en
+partie, pas en test.
+
+#### Étape 0 — l'infrastructure, sans aucun jeu
+
+- [ ] `botAct(room, botId)` générique + ids synthétiques (`bot:1`, `bot:2`)
+- [ ] Comptage des **humains** (pas des joueurs) pour le ménage des rooms — sinon une
+      salle abandonnée garde ses timers pour toujours
 - [ ] Badge « bot » dans le lobby et dans les vues de jeu
-- [ ] Bot Puissance 4 *(réutilise l'évaluateur)*
-- [ ] Modèle joueur en `localStorage` + bandeau de conseil en fin de partie
-- [ ] Bot Pierre-Feuille-Ciseaux prédictif *(le plus amusant à écrire)*
-- [ ] Bots UNO et Quiz
-- [ ] Tester : un bot qui « part » (kick), une salle 100 % bots, une reconnexion
-      humaine dans une partie contre des bots
+- [ ] Réglages de lobby : niveau, nombre de bots, remplissage automatique
+- [ ] Tester : un bot qu'on expulse, une salle 100 % bots (elle doit se nettoyer), une
+      reconnexion humaine dans une partie contre des bots
+
+#### Étape 1 — palier 🟢, le socle algorithmique
+
+- [ ] **Bot Puissance 4** aux 4 niveaux : negamax + fonction d'évaluation. C'est le
+      gabarit, et l'évaluateur que réutilise le coach
+- [ ] **Bot Morpion** aux 4 niveaux — le même moteur avec `tttWin()`
+- [ ] Modèle joueur en `localStorage` + bandeau de conseil en fin de partie *(dépend
+      de l'évaluateur ci-dessus)*
+
+#### Étape 2 — palier 🔵, sans nouvelle dépendance
+
+- [ ] **Bot Pierre-Feuille-Ciseaux** prédictif *(le plus amusant à écrire)*
+- [ ] **Bot Quiz** : bonne réponse avec une probabilité par niveau, délai plausible
+- [ ] **Bot UNO** : heuristiques de main
+
+#### Étape 3 — palier 🔴, seulement si la décision est prise
+
+- [ ] **Décider d'abord**, et l'écrire ici : accepte-t-on la dépendance à un modèle
+      (et donc la fin du « fonctionne sans internet » pour ces bots) ? Tant que la
+      réponse n'est pas écrite, ne pas coder
+- [ ] **Banque de dessins vectoriels pour Scribble** — la piste sans IA, à tenter avant
+      tout le reste du palier
+- [ ] `bots/llm.js` : un module, désactivé par défaut, avec repli déterministe
+- [ ] **Bot Undercover** — le plus petit cas d'usage utile (un indice d'un mot), donc
+      le bon terrain d'essai
+- [ ] **Bot Mongolpuri** — en dernier : la cohérence sur plusieurs tours est le vrai
+      travail, pas l'appel au modèle
 
 ---
 
@@ -831,14 +973,16 @@ directement — comme le reste de la suite :
 - [x] ~~`killerdoctor` a un `nightTime` dans `defaultSettings` mais aucune option correspondante dans le schéma client d'[app.js](public/js/app.js#L78)~~ — corrigé : champ ajouté (30 / **45** / 60 / 90 s), plus un test « chaque défaut serveur a un contrôle dans le lobby » qui empêche le prochain oubli.
 - [x] ~~`new_game` (morpion, Puissance 4) n'était ni réservé à l'hôte ni conditionné à la fin de la partie~~ — corrigé : le serveur exige les deux, avec un test de non-régression par jeu. Le client n'affichait le bouton qu'à l'hôte, le serveur acceptait l'action de n'importe qui, à n'importe quel moment.
 - [ ] [server.js](server.js) fait ~1 980 lignes : découper en `games/tictactoe.js`, `games/uno.js`, etc. avant d'ajouter 3-4 jeux de plus.
-- [ ] Le Quiz nécessite internet (opentdb.com) — prévoir une banque de questions locale en repli.
+- [x] ~~Le Quiz nécessite internet (opentdb.com) — prévoir une banque de questions locale en repli.~~ — fait : `data/quiz-questions.json` (60 questions), `loadQuizQuestions(n, source)` et `QUIZ_SOURCE=auto|online|offline`. En `auto`, un échec réseau ne renvoie plus le salon au lobby : il joue avec la banque et le dit. Tests dans [test/quiz.test.js](test/quiz.test.js).
+- [x] ~~Le pointeur de Scribble était décalé du curseur~~ — corrigé : `#scb-canvas` est en `object-fit: contain`, donc le bitmap 800×500 est letterboxé dans une boîte que le flex étire librement ; l'ancien `getPos()` divisait par la boîte et ignorait les bandes. `pointerToBitmap()` défait le fit, et [test/scribble-pointer.test.js](test/scribble-pointer.test.js) vérifie le calcul **et** que le CSS dit toujours `contain`.
+- [ ] Étoffer `data/quiz-questions.json` — 60 questions, en anglais. Objectif 200, et la question de la traduction reste ouverte (voir la section i18n).
 - [ ] Pas de `LICENSE` dans le repo alors que le README annonce MIT.
 
 ## 🧪 Tests — arrêter de découvrir les régressions en soirée
 
 ### ✅ État d'avancement
 
-La base est en place : **102 tests**, ~10 s, zéro dépendance ajoutée.
+La base est en place : **128 tests**, ~30 s, zéro dépendance ajoutée.
 
 | | Quoi |
 |--|------|
@@ -1086,36 +1230,55 @@ capte un moment où tout le monde regarde son écran en même temps.
 
 ## ⚙ Configuration par fichier `.env`
 
-Aujourd'hui une seule variable est lue : `PORT` ([server.js](server.js#L1353)). Tout le
-reste est en dur — `gamenight.local`, l'URL de l'API du Quiz, l'adresse d'écoute.
+### ✅ Livré (10/09/2026)
 
-### Mise en place
+[config.js](config.js) est le **seul** module qui lit `process.env`. Il charge le
+`.env` s'il existe, sans jamais écraser une variable déjà définie — donc
+`PORT=5000 npm start` et le bloc `environment:` de Compose gagnent toujours sur le
+fichier —, valide chaque valeur, et **sort avec un message qui nomme la coupable**
+plutôt que de retomber sur un défaut que personne n'a choisi.
 
-- [ ] Charger le `.env` au démarrage. Deux options :
-      - **Node ≥ 20.6 natif** : `node --env-file=.env server.js` — zéro dépendance,
-        mais casse le support de Node 18 annoncé dans `engines`
-      - **`dotenv`** : une dépendance de plus, compatible Node 18. ✅ Plutôt ça,
-        tant que Node 18 est supporté
-- [ ] Créer un `.env.example` **commité**, documenté, avec des valeurs par défaut sûres
-- [ ] `.env` est **déjà** dans [.gitignore](.gitignore) — vérifier qu'il y reste
-- [ ] Un seul module `config.js` qui lit, valide et exporte ; le reste du code ne lit
-      jamais `process.env` directement
-- [ ] Valider au démarrage et **planter avec un message clair** si une valeur est
-      absurde, plutôt que de démarrer à moitié cassé
+- [x] Chargement du `.env` : **parseur maison de vingt lignes**, pas `dotenv`.
+      Raison : une dépendance de moins à auditer, et ça marche sur Node 18 qui n'a pas
+      `--env-file` (`engines.node: >=18`). Le parseur gère les commentaires en début de
+      ligne, les guillemets, et un préfixe `export`
+- [x] `.env.example` commité et documenté, chaque valeur étant le défaut : un `.env`
+      vide se comporte exactement comme pas de `.env`
+- [x] `.env` toujours dans [.gitignore](.gitignore) **et** dans [.dockerignore](.dockerignore) —
+      l'image reste réutilisable d'une instance à l'autre, c'est Compose qui passe les
+      valeurs. Un test vérifie que `.env` reste ignoré et `.env.example` non
+- [x] Validation au démarrage, avec un message qui nomme la variable et renvoie vers
+      `.env.example`
+- [x] Les `check-and-start.{sh,ps1}` proposent de créer le `.env` depuis l'exemple —
+      sinon personne ne devine que le fichier existe
+- [x] `Dockerfile` : `config.js` et `data/` ajoutés au `COPY` explicite. ⚠️ Ce `COPY`
+      est une liste **nominative** : tout nouveau fichier racine doit y être ajouté, ou
+      l'image démarre en erreur
 
-### Variables proposées
-
-| Variable | Défaut | Rôle |
-|----------|--------|------|
-| `PORT` | `4000` | Déjà supporté |
+| Variable livrée | Défaut | Rôle |
+|-----------------|--------|------|
+| `PORT` | `4000` | Port d'écoute |
 | `HOST` | `0.0.0.0` | Interface d'écoute. `127.0.0.1` = accessible uniquement depuis la machine |
-| `MDNS_ENABLED` | `true` | Désactiver l'annonce Bonjour (utile en conteneur bridge, où elle ne sert à rien) |
-| `MDNS_HOST` | `gamenight.local` | Actuellement en dur |
-| `QUIZ_ENABLED` | `true` | Masquer le Quiz quand l'instance n'a pas d'accès internet |
-| `QUIZ_API_URL` | opentdb | Pointer vers un miroir ou une banque locale |
-| `MAX_ROOMS` | `50` | Garde-fou mémoire |
-| `MAX_PLAYERS_PER_ROOM` | `20` | Garde-fou |
-| `LOG_LEVEL` | `info` | `debug` pour investiguer un bug multijoueur |
+| `MDNS_ENABLED` | `true` | Désactive l'annonce Bonjour (utile en conteneur bridge, où elle ne sert à rien) |
+| `MDNS_HOST` | `gamenight.local` | Nom annoncé |
+| `QUIZ_SOURCE` | `auto` | `auto` · `online` · `offline` — d'où viennent les questions |
+| `QUIZ_API_URL` | opentdb | Pointer vers un miroir |
+
+> 💬 **Pourquoi pas plus de variables tout de suite :** un `.env.example` qui promet
+> `MAX_ROOMS` ou `LOG_LEVEL` alors que rien ne les lit est un mensonge — l'hébergeur
+> règle un bouton débranché. Un test compare `.env.example` et `config.js` dans les
+> deux sens, précisément pour que ça reste vrai.
+
+### ⏳ Variables encore à écrire
+
+Chacune demande du code, pas seulement une ligne dans l'exemple :
+
+| Variable | Défaut visé | Ce qu'il faut coder avant |
+|----------|-------------|---------------------------|
+| `MAX_ROOMS` | `50` | Refuser la création au-delà, avec un message clair côté client |
+| `MAX_PLAYERS_PER_ROOM` | `20` | Un garde-fou dans `room:join`, et le message qui va avec |
+| `LOG_LEVEL` | `info` | Il n'y a pas de logger : aujourd'hui c'est `console.log` en dur |
+| `QUIZ_ENABLED` | `true` | Masquer la carte d'accueil et refuser `game:start` — donc du client, pas juste du serveur. Depuis la banque locale, l'intérêt a beaucoup baissé |
 
 ### 🚨 « Une variable pour exposer sur internet ou non » — attention
 
@@ -1423,6 +1586,71 @@ titre que le temps de dessin.
       passe de `grep` sur les `emit(` qui transportent du texte
 - [ ] Le serveur reste **agnostique de la langue** : il ne charge jamais un fichier de
       traduction
+
+### 🔍 Traduire ce qui n'est pas dans le dictionnaire
+
+C'est le trou que `npm run i18n:check` ne voit pas : il compare `fr.json` à
+`en.json` et vérifie que les clés utilisées existent. Il ne dit **rien** de ce qui
+n'a jamais été transformé en clé. Aujourd'hui, quatre familles échappent au
+dictionnaire, et elles ne se règlent pas de la même façon :
+
+| Ce qui échappe | Exemples | Nature du problème |
+|----------------|----------|--------------------|
+| **Chaînes en dur côté client** | les messages dynamiques de [scribble.js](public/js/scribble.js), [uno.js](public/js/uno.js), [quiz.js](public/js/quiz.js) ; les `showConfirm('Exit the game? …')` | Dette d'extraction. Mécanique, fastidieux, sans surprise |
+| **Phrases émises par le serveur** | `io.emit('notification', 'Un texte anglais')` | Le serveur ne connaît pas la langue de chaque socket. Doit devenir `{key, params}` — le client sait déjà les lire (`tmsg()`) |
+| **Contenu partagé par le salon** | mots de Scribble, paires d'Undercover, questions du Quiz (locales **ou** opentdb) | Pas traduisible par joueur *par nature* : deux joueurs dans deux langues cassent la comparaison des réponses. → réglage `contentLanguage` du salon |
+| **Textes hors de notre portée** | messages du navigateur (`alert` natif, validation de formulaire), noms de fichiers, erreurs de `fetch` | À éviter plutôt qu'à traduire : remplacer les dialogues natifs par les nôtres |
+
+#### Trouver ce qui manque, automatiquement
+
+Le principe à viser : **il doit être impossible d'ajouter une chaîne en dur sans
+que quelque chose se plaigne.** Trois niveaux, du moins cher au plus fiable :
+
+- [ ] **Un détecteur de chaînes visibles.** Étendre
+      [scripts/i18n-check.js](scripts/i18n-check.js) d'un mode `--find-hardcoded` qui
+      signale, dans `public/js/*.js`, les littéraux affectés à `textContent`,
+      `innerHTML`, `placeholder`, `title`, ou passés à `showConfirm`/`toast`, et qui ne
+      passent pas par `t()`. Beaucoup de faux positifs au début (classes CSS, clés,
+      emojis) → une liste d'exceptions explicite, jamais un seuil flou
+- [ ] **Le même détecteur côté serveur** sur les `emit(` qui transportent une phrase
+      plutôt qu'une clé. C'est un `grep` mieux écrit, et c'est le recensement que la
+      section « Côté serveur » réclame déjà
+- [ ] **Un compteur à l'exécution.** `I18n.t()` reçoit déjà les clés inconnues :
+      accumuler `key → nombre d'appels` et l'exposer derrière `?i18ndebug=1`. Une partie
+      jouée dans une langue devient alors un rapport de ce qui manque *réellement*, ce
+      qu'aucune analyse statique ne donne
+- [ ] **Bloquer en CI** (`ci.yml`) sur le détecteur **et** sur `i18n:check`, au même
+      titre que `node --check`. Une chaîne en dur doit se voir en PR, pas en soirée
+
+#### Mettre les fichiers de langue à jour, automatiquement
+
+Deux choses différentes, à ne pas confondre : **synchroniser les clés** (mécanique,
+automatisable sans risque) et **traduire les valeurs** (jamais entièrement
+automatisable).
+
+- [ ] **`npm run i18n:sync`** — ajoute dans chaque `<code>.json` les clés présentes
+      dans `en.json` et absentes, avec la valeur anglaise **préfixée d'un marqueur**
+      (`"@todo Play again"`). Trois effets : le fichier reste key-for-key identique, la
+      chaîne reste lisible en jeu au lieu d'afficher la clé brute, et un `grep '@todo'`
+      donne la liste de ce qui reste à traduire. Retire aussi les clés orphelines,
+      derrière un `--prune` explicite
+- [ ] **Ne jamais réordonner les fichiers** en passant : un tri alphabétique
+      transformerait chaque ajout de clé en diff de 500 lignes. Les clés restent
+      groupées par écran, dans l'ordre où elles apparaissent
+- [ ] **Un test** qui échoue si un `@todo` traîne dans `fr.json` — les deux langues
+      livrées doivent rester complètes. Pour `es`/`zh`/`ar`, le marqueur est un état
+      normal et documenté
+- [ ] **Où s'arrête l'automatisation.** Un pré-remplissage par traduction automatique
+      (ou par un modèle de langue) fait gagner du temps sur les 400 clés d'une nouvelle
+      langue, mais il ne peut pas décider du registre — GameNight tutoie le joueur en
+      français, et une machine ne le sait pas. À utiliser comme brouillon marqué
+      `@todo`, **relu clé par clé**, jamais commité tel quel
+
+> 💬 **Mon avis :** faire `i18n:sync` en premier, avant d'ajouter une quatrième
+> langue. Sans lui, chaque nouvelle langue est une passe manuelle de 400 clés et un
+> fichier qui dérive dès le lendemain. Le détecteur de chaînes en dur vient ensuite :
+> il transforme une dette invisible en liste finie. Le pré-remplissage automatique en
+> dernier, et seulement pour les langues qu'on ne parle pas.
 
 ### 🧰 Outillage
 
