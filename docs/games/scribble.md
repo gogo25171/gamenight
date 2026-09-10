@@ -46,8 +46,15 @@ Pencil, eraser, fill, a colour, a brush size — and two buttons worth calling o
 
 | | What it does |
 |--|--------------|
-| **↩️ Undo** | Removes the **last gesture**, not the last pixel: one whole pencil stroke, one fill, or one Clear. `Ctrl+Z` does the same. Greyed out when there is nothing left to undo. |
+| **✏️ Pencil** | Draws in the chosen colour, at the slider's width. |
+| **🧽 Eraser** | Paints the background back over the drawing, **three times wider** than the pencil at the same slider setting — rubbing out is a coarser gesture than drawing. The width readout next to the slider shows the real figure, so `5px` on the pencil reads `15px` on the eraser. Picking a colour switches you back to the pencil. |
+| **🪣 Fill** | Floods the area you click with the chosen colour. |
+| **↩️ Undo** | Removes the **last gesture**, not the last pixel: one whole pencil stroke, one erase, one fill, or one Clear. `Ctrl+Z` does the same. Greyed out when there is nothing left to undo. |
 | **🗑️ Clear** | Wipes the canvas — and is itself undoable, so hitting it by accident is not the end of the drawing. |
+
+The eraser paints white rather than punching a transparent hole, which is why an
+erased area still saves correctly in the PNG below and why undoing an erase brings
+back exactly what was under it.
 
 Undo is the drawer's alone, and only while they are drawing: nobody can rub out
 someone else's work, and the drawing stops being editable at the reveal.

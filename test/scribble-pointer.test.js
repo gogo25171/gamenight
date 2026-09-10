@@ -10,6 +10,10 @@
 // checked here. The suite has no browser, so the function is lifted out of the
 // source and evaluated on its own — the same trick the BETA-badge test uses to
 // read the client without running it.
+//
+// The eraser tests at the bottom guard the same class of bug from the other end:
+// maths the drawer applies to their own canvas but forgets to send, so the room
+// sees something different from what the drawer drew.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -19,14 +23,26 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 const src = fs.readFileSync(path.join(PUBLIC, 'js', 'scribble.js'), 'utf8');
 const css = fs.readFileSync(path.join(PUBLIC, 'style.css'), 'utf8');
 
-/** Pulls one top-level-in-the-IIFE function out of scribble.js and compiles it. */
-function lift(name) {
+/**
+ * Pulls one top-level-in-the-IIFE function out of scribble.js and compiles it.
+ * `scope` supplies whatever module constants the function closes over, since a
+ * lifted function is evaluated outside the IIFE that normally holds them.
+ */
+function lift(name, scope = {}) {
   const start = src.indexOf(`function ${name}(`);
   assert.ok(start > 0, `${name}() not found in public/js/scribble.js`);
   // Functions in that file are indented two spaces, so the first "\n  }" closes it.
   const end = src.indexOf('\n  }', start);
   assert.ok(end > start, `could not find the end of ${name}()`);
-  return new Function(`return (${src.slice(start, end + 4)});`)();
+  const names = Object.keys(scope);
+  return new Function(...names, `return (${src.slice(start, end + 4)});`)(...names.map(k => scope[k]));
+}
+
+/** Reads a `const NAME = <literal>;` out of the same source. */
+function liftConst(name) {
+  const m = src.match(new RegExp(`const ${name} = ([^;]+);`));
+  assert.ok(m, `${name} not found in public/js/scribble.js`);
+  return new Function(`return (${m[1]});`)();
 }
 
 const pointerToBitmap = lift('pointerToBitmap');
@@ -96,4 +112,48 @@ test('the CSS and the pointer mapping agree about object-fit', () => {
   const fits = rules.filter(r => /object-fit\s*:/.test(r)).map(r => r.match(/object-fit\s*:\s*([\w-]+)/)[1]);
   assert.ok(fits.length > 0 && fits.every(f => f === 'contain'),
     'pointerToBitmap() undoes an object-fit: contain — change the CSS and you must change it too');
+});
+
+// ─── Eraser width ───
+//
+// The eraser is three times the slider value, and that multiplier used to be
+// applied *only* to the drawer's canvas: `ctx.lineWidth = brushSize * 3` locally,
+// while the stroke went out carrying the untripled `brushSize`. So the drawer wiped
+// a wide band and everyone else received a thin white line — and after an undo, the
+// drawer repainted from the log and lost their own band too.
+
+const ERASER_SCALE = liftConst('ERASER_SCALE');
+const strokeWidth = lift('strokeWidth', { ERASER_SCALE });
+const strokeColor = lift('strokeColor');
+
+test('the eraser is wider than the pencil at the same slider value', () => {
+  for (const size of [2, 5, 20, 40]) {
+    assert.equal(strokeWidth('pencil', size), size, 'the pencil paints exactly the slider value');
+    assert.ok(strokeWidth('eraser', size) > size, 'the eraser has to be coarser than the pencil');
+  }
+  assert.equal(strokeWidth('eraser', 5), 5 * ERASER_SCALE);
+  assert.ok(ERASER_SCALE > 1, 'an eraser no wider than the pencil is just a white pencil');
+});
+
+test('the width the drawer paints is the width that goes into the stroke', () => {
+  // The regression: these two are the same call now. If someone reintroduces a
+  // multiplier at the painting site only, this is what catches it.
+  const src2 = require('fs').readFileSync(path.join(PUBLIC, 'js', 'scribble.js'), 'utf8');
+  const painted = src2.match(/ctx\.lineWidth = ([^;]+);/g) || [];
+  assert.ok(painted.length > 0, 'nothing sets ctx.lineWidth any more — has the drawing loop moved?');
+  for (const line of painted) {
+    assert.ok(/strokeWidth\(|remoteCtx\.size/.test(line),
+      `ctx.lineWidth must come from strokeWidth() or the stroke itself, got: ${line}`);
+  }
+  // And the outgoing stroke must carry it, not the raw slider value.
+  assert.match(src2, /size: strokeWidth\(tool, brushSize\)/,
+    'the emitted stroke has to carry the painted width, or the room sees a different line');
+});
+
+test('the eraser paints the background rather than cutting a hole', () => {
+  // Erasing to transparent would look identical to the drawer and show as black on
+  // black in the downloaded PNG, which composites onto white.
+  assert.equal(strokeColor('eraser', '#ef4444'), '#ffffff');
+  assert.equal(strokeColor('pencil', '#ef4444'), '#ef4444');
+  assert.equal(strokeColor('fill', '#22c55e'), '#22c55e');
 });

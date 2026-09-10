@@ -398,6 +398,25 @@ Two consequences worth knowing before changing any of it:
 `scribbleActionCount()` rides along on the redraw and on the reconnect payload,
 so the drawer's Undo button greys out at the right moment even after a refresh.
 
+**The eraser** is a white pencil `ERASER_SCALE` times wider, and the rule that
+matters is that **`strokeWidth()` is the only place the multiplier lives**:
+
+```js
+const ERASER_SCALE = 3;
+function strokeWidth(activeTool, size) { return activeTool === 'eraser' ? size * ERASER_SCALE : size; }
+```
+
+It has to be applied *before* the stroke is emitted, not only when painting the
+drawer's own canvas. Applying it locally was a real bug: the drawer wiped a wide
+band while `size: brushSize` went out untripled, so the room received a thin white
+line — and the drawer lost their band too on the next undo repaint, since that
+repaints from the log. `test/scribble-pointer.test.js` now asserts that every
+`ctx.lineWidth` comes from `strokeWidth()` or from the incoming stroke.
+
+Erasing to white rather than to transparent (`globalCompositeOperation` is left
+alone) is deliberate: it keeps the PNG export correct and makes undoing an erase
+restore exactly what was underneath.
+
 **Saving the drawing** is client-only: `drawingAsPng()` composites the canvas onto
 a white sheet before `toDataURL()`, because a canvas nobody has cleared yet is
 transparent and a transparent PNG reads as black-on-black in most viewers. The

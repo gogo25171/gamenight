@@ -103,6 +103,23 @@ const Scribble = (() => {
     canvas.addEventListener('touchend', () => endDraw());
   }
 
+  // The eraser is deliberately fatter than the pencil at the same slider value —
+  // rubbing out is a coarser gesture than drawing. The multiplier has to be applied
+  // once, here, and travel *inside* the stroke: applying it only to the drawer's own
+  // canvas is what made a wide erased band arrive everywhere else as a thin white
+  // line, and come back thin on the drawer's own screen after an undo repaint.
+  const ERASER_SCALE = 3;
+
+  /** The width a stroke is actually painted at, on every screen in the room. */
+  function strokeWidth(activeTool, size) {
+    return activeTool === 'eraser' ? size * ERASER_SCALE : size;
+  }
+
+  /** The eraser paints the canvas background rather than cutting a hole in it. */
+  function strokeColor(activeTool, activeColor) {
+    return activeTool === 'eraser' ? '#ffffff' : activeColor;
+  }
+
   function canvasCoords(nx, ny) {
     return { x: nx * canvas.width, y: ny * canvas.height };
   }
@@ -126,17 +143,18 @@ const Scribble = (() => {
     lastX = x; lastY = y;
     ctx.beginPath();
     ctx.moveTo(x, y);
-    drawBuffer.push({ type: 'begin', nx: x / canvas.width, ny: y / canvas.height, color: tool === 'eraser' ? '#ffffff' : color, size: brushSize, tool });
+    drawBuffer.push({
+      type: 'begin', nx: x / canvas.width, ny: y / canvas.height,
+      color: strokeColor(tool, color), size: strokeWidth(tool, brushSize), tool,
+    });
     countAction();
     scheduleFlush();
   }
 
   function continueDraw(x, y) {
     if (!isDrawing) return;
-    const c = tool === 'eraser' ? '#ffffff' : color;
-    ctx.globalCompositeOperation = tool === 'eraser' ? 'source-over' : 'source-over';
-    ctx.strokeStyle = c;
-    ctx.lineWidth = tool === 'eraser' ? brushSize * 3 : brushSize;
+    ctx.strokeStyle = strokeColor(tool, color);
+    ctx.lineWidth = strokeWidth(tool, brushSize);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -313,13 +331,20 @@ const Scribble = (() => {
   }
 
   // ─── Tools ───
+
+  /** Shows the width the active tool really paints at — the eraser is wider. */
+  function updateSizeLabel() {
+    document.getElementById('scb-size-label').textContent = `${strokeWidth(tool, brushSize)}px`;
+  }
+
   function setupTools() {
     document.querySelectorAll('.tool-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         tool = btn.dataset.tool;
-        canvas.style.cursor = tool === 'eraser' ? 'cell' : tool === 'fill' ? 'crosshair' : 'crosshair';
+        canvas.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
+        updateSizeLabel();
       });
     });
 
@@ -338,13 +363,15 @@ const Scribble = (() => {
           tool = 'pencil';
           document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
           document.querySelector('[data-tool="pencil"]').classList.add('active');
+          canvas.style.cursor = 'crosshair';
+          updateSizeLabel();
         }
       });
     });
 
     document.getElementById('scb-size').addEventListener('input', e => {
       brushSize = +e.target.value;
-      document.getElementById('scb-size-label').textContent = `${brushSize}px`;
+      updateSizeLabel();
     });
 
     document.getElementById('scb-clear').addEventListener('click', () => clearCanvas(true));
