@@ -222,6 +222,8 @@
   "uno.color.blue": "Bleu",
   "quiz.rankings": "Classement",
   "quiz.diff.easy": "Facile",
+  "quiz.offlineBank": "Pas d'internet — les questions viennent de la banque locale.",
+  "quiz.loadFailed": "Impossible de charger les questions — vérifie ta connexion internet.",
   "rules.title": "📖 Comment jouer",
   "rules.howToPlay": "🔄 Comment jouer",
   "rules.winTitle": "🏆 Condition de victoire",

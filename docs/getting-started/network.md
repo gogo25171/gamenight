@@ -29,6 +29,11 @@ The server advertises itself over **mDNS (Bonjour)** under the stable hostname
 | Most Linux desktops | Yes, via Avahi |
 | Windows | Needs [Bonjour for Windows](https://support.apple.com/kb/DL999) |
 
+The name and the announcement itself are both configurable: `MDNS_HOST` renames
+it, and `MDNS_ENABLED=false` turns it off entirely — worth doing in a bridged
+container, where the announcement cannot reach anyone. See
+[Configuration](installation.md#configuration-env).
+
 If it does not resolve, fall back to the IP address shown in the terminal. To
 find it by hand:
 
@@ -49,6 +54,28 @@ find it by hand:
     ```bash
     hostname -I
     ```
+
+## Does anything need the internet?
+
+No. GameNight plays entirely on the LAN.
+
+The Quiz *prefers* the internet — it asks [opentdb.com](https://opentdb.com) for
+fresh questions when the game starts — but it no longer depends on it. If the site
+is unreachable, blocked, or rate-limiting past its retries, the game falls back to
+a bundled bank of 60 questions, tells the room it has done so, and plays on.
+
+An instance that will never have internet can skip the attempt (and the couple of
+seconds it costs) by setting `QUIZ_SOURCE=offline` in the
+[`.env`](installation.md#configuration-env). The opposite, `online`, refuses the
+bundled bank — the room goes back to the lobby rather than replay questions it may
+have seen.
+
+!!! tip "Hotspot parties"
+
+    A phone hotspot with no data plan, a train, a campsite: this is exactly the
+    case `QUIZ_SOURCE=offline` exists for. Everything else — Mongolpuri, UNO,
+    Scribble, Tic Tac Toe, Connect Four, Undercover, Rock Paper Scissors — never
+    touched the network in the first place.
 
 ## Invite links
 
@@ -103,6 +130,14 @@ firewall.
     can reach the port can join a room. If you must play remotely, use a VPN
     such as Tailscale or WireGuard so everyone shares a virtual LAN. See
     [SECURITY.md](https://github.com/gogo25171/gamenight/blob/main/SECURITY.md).
+
+??? question "The Quiz says it is using the built-in questions"
+
+    It could not reach opentdb.com — no internet, a firewall or DNS blocking the
+    request, or a rate limit that outlasted the retries. The game plays normally
+    from the bundled bank; nothing is broken. To always start from the bank and
+    skip the attempt, set `QUIZ_SOURCE=offline` in the
+    [`.env`](installation.md#configuration-env).
 
 ??? question "A player refreshed and lost the game"
 

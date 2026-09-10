@@ -1320,29 +1320,65 @@ function endUno(room, winnerId) {
 // ─────────────────────────── QUIZ ───────────────────────────
 
 const QUIZ_REVEAL_MS = 4000;
+const QUIZ_DIFF_ORDER = { easy: 0, medium: 1, hard: 2 };
+
+// Shipped question bank, used when opentdb.com is unreachable — or always, when
+// QUIZ_SOURCE=offline. Stored as answer + wrong answers rather than a ready-made
+// option list so the correct one never sits at a predictable index.
+const QUIZ_LOCAL_BANK = require('./data/quiz-questions.json');
+
+/** answer + wrong[] → the `{ question, correctAnswer, options }` shape clients get. */
+function quizBuildQuestion({ question, answer, wrong, difficulty }) {
+  return { question, correctAnswer: answer, options: shuffleArr([answer, ...wrong]), difficulty };
+}
+
+/** Easy first, hard last — the ramp the online path already relied on. */
+function quizByDifficulty(questions) {
+  return questions.sort((a, b) => (QUIZ_DIFF_ORDER[a.difficulty] ?? 0) - (QUIZ_DIFF_ORDER[b.difficulty] ?? 0));
+}
+
+/** `n` questions from the local bank. Caps at the bank size instead of repeating one. */
+function quizLocalQuestions(n = 15) {
+  const picked = shuffleArr(QUIZ_LOCAL_BANK.slice()).slice(0, Math.min(n, QUIZ_LOCAL_BANK.length));
+  return quizByDifficulty(picked.map(quizBuildQuestion));
+}
 
 async function fetchQuizQuestions(n = 15) {
   const decode = s => decodeURIComponent(s);
-  const diffOrder = { easy: 0, medium: 1, hard: 2 };
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt > 0) await new Promise(r => setTimeout(r, 6000));
-    const res = await fetch(`https://opentdb.com/api.php?amount=${n}&type=multiple&encode=url3986`);
+    const res = await fetch(`${config.quizApiUrl}?amount=${n}&type=multiple&encode=url3986`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if (json.response_code === 5) continue;
     if (json.response_code !== 0) throw new Error(`OpenTDB code ${json.response_code}`);
-    return json.results
-      .sort((a, b) => (diffOrder[a.difficulty] ?? 0) - (diffOrder[b.difficulty] ?? 0))
-      .map(q => {
-        const options = [decode(q.correct_answer), ...q.incorrect_answers.map(decode)];
-        for (let i = options.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [options[i], options[j]] = [options[j], options[i]];
-        }
-        return { question: decode(q.question), correctAnswer: decode(q.correct_answer), options, difficulty: q.difficulty };
-      });
+    return quizByDifficulty(json.results.map(q => quizBuildQuestion({
+      question: decode(q.question),
+      answer: decode(q.correct_answer),
+      wrong: q.incorrect_answers.map(decode),
+      difficulty: q.difficulty,
+    })));
   }
   throw new Error('Rate limited after retries');
+}
+
+/**
+ * The questions for one game, plus where they came from.
+ * `offline` never touches the network; `online` fails loudly, which is what an
+ * instance that wants fresh trivia and nothing else asked for; `auto` — the
+ * default — falls back to the bank so a LAN party without internet still plays.
+ * `source` is a parameter rather than a straight `config` read so a test can drive
+ * all three branches without rebuilding the config.
+ */
+async function loadQuizQuestions(n = 15, source = config.quizSource) {
+  if (source === 'offline') return { questions: quizLocalQuestions(n), source: 'local' };
+  try {
+    return { questions: await fetchQuizQuestions(n), source: 'online' };
+  } catch (err) {
+    if (source === 'online') throw err;
+    console.warn(`Quiz: ${config.quizApiUrl} unreachable (${err.message}) — falling back to the local bank.`);
+    return { questions: quizLocalQuestions(n), source: 'local' };
+  }
 }
 
 async function startQuiz(room) {
@@ -1355,11 +1391,13 @@ async function startQuiz(room) {
   room.gameState = { type: 'quiz', questions: [], currentQ: 0, phase: 'loading', answers: {}, results: null, scores, correctCounts, timeLimitMs, questionStartTime: 0 };
   io.to(room.code).emit('quiz:state', { phase: 'loading' });
   try {
-    const questions = await fetchQuizQuestions(numQ);
+    const { questions, source } = await loadQuizQuestions(numQ);
     if (room.status !== 'playing') return;
     room.gameState.questions = questions;
     room.gameState.phase = 'question';
     room.gameState.questionStartTime = Date.now();
+    // Say so, rather than letting the room wonder why the questions look familiar.
+    if (source === 'local') io.to(room.code).emit('notification', { key: 'quiz.offlineBank' });
     io.to(room.code).emit('quiz:state', quizPublic(room.gameState, room));
     addTimer(room, () => quizReveal(room), timeLimitMs);
   } catch (e) {
@@ -1367,7 +1405,7 @@ async function startQuiz(room) {
     if (rooms.has(room.code)) {
       room.status = 'lobby';
       io.to(room.code).emit('game:back_to_lobby');
-      io.to(room.code).emit('notification', 'Failed to load questions — check your internet connection.');
+      io.to(room.code).emit('notification', { key: 'quiz.loadFailed' });
       broadcastLobby(room);
     }
   }
@@ -1978,5 +2016,5 @@ module.exports = {
   WORDS, maskWord, randWords, startScribble, scribbleStartTurn, scribbleWordChosen,
   scribblePlayers,
   // quiz
-  quizPublic,
+  startQuiz, quizPublic, QUIZ_LOCAL_BANK, quizBuildQuestion, quizLocalQuestions, loadQuizQuestions,
 };
