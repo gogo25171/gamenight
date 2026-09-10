@@ -733,7 +733,10 @@ input[type="range"] { accent-color: var(--accent); width: 100%; cursor: pointer;
 #view-killerdoctor.active { height: 100vh; overflow: hidden; }
 #view-scribble.active { height: 100vh; overflow: hidden; }
 .scribble-center { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
-#scb-canvas { flex: 1; display: block; width: 100%; height: auto; min-height: 0; background: #ffffff; }
+/* object-fit keeps the 800×500 bitmap undistorted in a box the flex layout sizes
+   freely — so the drawing is letterboxed, and pointerToBitmap() in scribble.js
+   has to undo that fit. Change one and you change the other. */
+#scb-canvas { flex: 1; display: block; width: 100%; height: auto; min-height: 0; background: #ffffff; object-fit: contain; }
 
 /* ═══════════════════ HOME RULES BUTTON ═══════════════════ */
 .btn-rules-link {

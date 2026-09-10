@@ -40,12 +40,26 @@ const Scribble = (() => {
   }
 
   // ─── Canvas setup ───
+
+  /**
+   * Pointer position → bitmap pixel.
+   *
+   * The bitmap is a fixed 800×500 while the element is stretched by the flex
+   * layout, and `object-fit: contain` fits the bitmap inside that box without
+   * distorting it — so the drawing is letterboxed, and the box is *not* where the
+   * pixels are. Scaling each axis by the box alone put the ink beside the cursor,
+   * off by half the bars and worse the further from the centre you drew.
+   * Kept free of `canvas`/DOM so the maths can be unit-tested.
+   */
+  function pointerToBitmap(rect, bmpW, bmpH, clientX, clientY) {
+    const scale = Math.min(rect.width / bmpW, rect.height / bmpH);
+    const left = rect.left + (rect.width - bmpW * scale) / 2;
+    const top = rect.top + (rect.height - bmpH * scale) / 2;
+    return { x: (clientX - left) / scale, y: (clientY - top) / scale };
+  }
+
   function getPos(clientX, clientY) {
-    const r = canvas.getBoundingClientRect();
-    return {
-      x: (clientX - r.left) * (canvas.width / r.width),
-      y: (clientY - r.top) * (canvas.height / r.height),
-    };
+    return pointerToBitmap(canvas.getBoundingClientRect(), canvas.width, canvas.height, clientX, clientY);
   }
 
   function setupCanvasEvents() {
@@ -78,6 +92,9 @@ const Scribble = (() => {
   }
 
   function startDraw(x, y) {
+    // The letterbox bars are part of the element but not of the bitmap: a click
+    // there is not a click on the drawing.
+    if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return;
     if (tool === 'fill') {
       floodFill(Math.round(x), Math.round(y), color);
       const n = normalizeCoords(x, y);
