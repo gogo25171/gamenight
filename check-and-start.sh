@@ -181,6 +181,26 @@ check_project_deps() {
   fi
 }
 
+# ---------- configuration ----------
+
+# .env is optional: config.js falls back to sane defaults. But someone who wants
+# to change the port or force the offline Quiz will not guess the file exists, so
+# offer it here rather than in the documentation only.
+check_env_file() {
+  if [ -f ".env" ]; then
+    ok "Fichier .env détecté (voir .env.example pour les réglages disponibles)."
+    return
+  fi
+  if [ ! -f ".env.example" ]; then
+    return
+  fi
+  warn "Aucun fichier .env — les valeurs par défaut seront utilisées (port 4000, mDNS actif)."
+  if confirm "Créer un .env à partir de .env.example ?"; then
+    cp .env.example .env
+    ok "Fichier .env créé. Modifie-le puis relance ce script si besoin."
+  fi
+}
+
 # ---------- main ----------
 
 echo ""
@@ -192,6 +212,7 @@ echo ""
 check_node
 check_npm
 check_project_deps
+check_env_file
 
 echo ""
 ok "Tous les prérequis sont satisfaits."

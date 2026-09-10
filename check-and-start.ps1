@@ -125,6 +125,22 @@ function Check-ProjectDeps {
     }
 }
 
+function Check-EnvFile {
+    # .env est optionnel : config.js retombe sur des valeurs par defaut. Mais
+    # personne ne devine qu'il existe, donc on le propose ici et pas seulement
+    # dans la documentation.
+    if (Test-Path ".env") {
+        Write-Ok "Fichier .env detecte (voir .env.example pour les reglages disponibles)."
+        return
+    }
+    if (-not (Test-Path ".env.example")) { return }
+    Write-Warn "Aucun fichier .env - les valeurs par defaut seront utilisees (port 4000, mDNS actif)."
+    if (Confirm-Action "Creer un .env a partir de .env.example ?") {
+        Copy-Item ".env.example" ".env"
+        Write-Ok "Fichier .env cree. Modifie-le puis relance ce script si besoin."
+    }
+}
+
 Write-Host ""
 Write-Host "==========================================="
 Write-Host " GAMENIGHT - Verification des prerequis     "
@@ -134,6 +150,7 @@ Write-Host ""
 Check-Node
 Check-Npm
 Check-ProjectDeps
+Check-EnvFile
 
 Write-Host ""
 Write-Ok "Tous les prerequis sont satisfaits."

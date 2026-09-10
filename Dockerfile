@@ -24,8 +24,10 @@ ENV PORT=4000
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json server.js ./
+COPY package.json server.js config.js ./
 COPY public ./public
+# Offline Quiz bank — the image has to play without internet too.
+COPY data ./data
 
 # Numeric uid: the 'node' user is 1000 in the official images, and a numeric id
 # is resolvable by hosts that enforce runAsNonRoot (hadolint DL3066).

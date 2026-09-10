@@ -3,6 +3,10 @@ services:
   #   docker compose up -d   →   http://<ip-de-la-machine>:4000
   # Le mDNS (gamenight.local) ne traverse pas le bridge : utilisez l'IP,
   # ou le profil "mdns" ci-dessous si vous êtes sous Linux.
+  #
+  # Les variables ci-dessous sont lues dans le `.env` du dossier du projet
+  # (voir .env.example) — Compose l'interprète automatiquement. Le `.env` n'est
+  # pas copié dans l'image (.dockerignore) : c'est bien Compose qui le transmet.
   gamenight:
     build: .
     image: gamenight:latest
@@ -10,7 +14,15 @@ services:
     restart: unless-stopped
     init: true
     environment:
+      # Port *interne* figé : c'est celui du healthcheck et du mapping ci-dessous.
+      # PORT dans le .env choisit le port publié côté hôte.
       PORT: 4000
+      HOST: ${HOST:-0.0.0.0}
+      # Inutile derrière un bridge : l'annonce n'atteindrait personne.
+      MDNS_ENABLED: ${MDNS_ENABLED:-false}
+      MDNS_HOST: ${MDNS_HOST:-gamenight.local}
+      QUIZ_SOURCE: ${QUIZ_SOURCE:-auto}
+      QUIZ_API_URL: ${QUIZ_API_URL:-https://opentdb.com/api.php}
     ports:
       - "${PORT:-4000}:4000"
 
@@ -27,4 +39,10 @@ services:
     init: true
     network_mode: host
     environment:
-      PORT: 4000
+      # Pas de mapping de ports en réseau hôte : le port du .env est celui écouté.
+      PORT: ${PORT:-4000}
+      HOST: ${HOST:-0.0.0.0}
+      MDNS_ENABLED: ${MDNS_ENABLED:-true}
+      MDNS_HOST: ${MDNS_HOST:-gamenight.local}
+      QUIZ_SOURCE: ${QUIZ_SOURCE:-auto}
+      QUIZ_API_URL: ${QUIZ_API_URL:-https://opentdb.com/api.php}

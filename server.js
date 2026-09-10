@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 const os = require('os');
 const { Bonjour } = require('bonjour-service');
+const { config } = require('./config');
 
 const app = express();
 const server = http.createServer(app);
@@ -1923,23 +1924,26 @@ function ucPublic(gs) {
 
 // ─────────────────────────── START ───────────────────────────
 
-const PORT = process.env.PORT || 4000;
-const MDNS_HOST = 'gamenight.local';
+// Everything configurable lives in config.js, which reads `.env` — see .env.example.
+const { port: PORT, host: HOST, mdnsHost: MDNS_HOST, mdnsEnabled: MDNS_ENABLED } = config;
 
 // Only listen when started directly. `require('./server')` hands the tests the
 // real game functions without opening a port or publishing over mDNS.
 if (require.main === module) {
-  server.listen(PORT, '0.0.0.0', () => {
-    const bonjour = new Bonjour();
-    bonjour.publish({ name: 'GameNight', type: 'http', port: Number(PORT), host: MDNS_HOST });
+  server.listen(PORT, HOST, () => {
+    const bonjour = MDNS_ENABLED ? new Bonjour() : null;
+    bonjour?.publish({ name: 'GameNight', type: 'http', port: PORT, host: MDNS_HOST });
 
     console.log('\n🎮  GameNight is live!\n');
     console.log(`  Local:    http://localhost:${PORT}`);
-    console.log(`  Network:  http://${MDNS_HOST}:${PORT}  ← share with friends!`);
+    if (MDNS_ENABLED) console.log(`  Network:  http://${MDNS_HOST}:${PORT}  ← share with friends!`);
     console.log('\n  Open in any browser on the same WiFi / LAN.\n');
+    if (config.quizSource !== 'auto') console.log(`  Quiz questions: ${config.quizSource}\n`);
 
-    process.on('SIGINT', () => bonjour.unpublishAll(() => process.exit()));
-    process.on('SIGTERM', () => bonjour.unpublishAll(() => process.exit()));
+    // Nothing to unpublish when mDNS is off, but the room still has to close.
+    const bye = () => (bonjour ? bonjour.unpublishAll(() => process.exit()) : process.exit());
+    process.on('SIGINT', bye);
+    process.on('SIGTERM', bye);
   });
 }
 
